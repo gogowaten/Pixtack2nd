@@ -1,0 +1,221 @@
+﻿<Window x:Class="MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Wpf_Pixtack_test2_ExThumb"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="700" Width="554" AllowDrop="True">
+  <Window.Resources>
+    <ControlTemplate x:Key="ct" TargetType="local:ExThumb">
+      <local:ExImage x:Name="image1"/>
+    </ControlTemplate>
+  </Window.Resources>
+
+  <Grid>
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition x:Name="gridColumn0" Width="240"/>
+      <ColumnDefinition/>
+    </Grid.ColumnDefinitions>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="auto"/>
+      <RowDefinition/>
+      <RowDefinition Height="auto"/>
+    </Grid.RowDefinitions>
+
+    <StackPanel Grid.ColumnSpan="2">
+      <Menu Grid.ColumnSpan="2" VerticalAlignment="Top">
+        <MenuItem Header="メニューバー">
+          <MenuItem Name="menu1" Header="表示1"/>
+          <MenuItem Name="menu2" Header="表示2"/>
+        </MenuItem>
+      </Menu>
+      <ToolBarTray >
+        <ToolBar>
+          <Button Content="ツールバー"/>
+          <ComboBox Width="100">
+            <ComboBoxItem Content="combobox" IsSelected="True"/>
+            <ComboBoxItem Content="comboboxItem2"/>
+          </ComboBox>
+          <Menu>
+            <MenuItem Header="file(_F)">
+              <MenuItem Command="New"/>
+              <MenuItem Command="SaveAs"/>
+            </MenuItem>
+            <MenuItem Header="編集(_E)">
+              <MenuItem Command="Cut"/>
+              <MenuItem Command="Copy"/>
+            </MenuItem>
+          </Menu>
+        </ToolBar>
+      </ToolBarTray>
+    </StackPanel>
+
+    <StatusBar Grid.ColumnSpan="2" Grid.Row="2" VerticalAlignment="Bottom">
+      <StatusBarItem x:Name="stSaveSize" Content="保存画像サイズ = "/>
+      <StatusBarItem x:Name="stZIndex" Content="ZIndex = "/>
+      <StatusBarItem x:Name="stLocate" Content="Locate = "/>
+      <StatusBarItem x:Name="stImaSize" Content="Size = "/>
+      <StatusBarItem x:Name="stMotoSize" Content="Size = "/>
+    </StatusBar>
+
+
+    <DockPanel Grid.Row="1">
+      <Grid Name="grid2" Height="200" Background="{Binding ElementName=canvas1, Path=Background}" DockPanel.Dock="Top">
+        <local:HighQualiyImage x:Name="mihonUpper" Width="100" Height="80" HorizontalAlignment="Left" VerticalAlignment="Bottom"/>
+        <local:HighQualiyImage x:Name="mihon" Width="100" Height="80"/>
+        <local:HighQualiyImage x:Name="mihonUnder" Width="100" Height="80" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+        <TextBlock Text="stackpanel grid" VerticalAlignment="Top"/>
+        <StackPanel Width="72" HorizontalAlignment="Right">
+          <Button x:Name="btAge" Content="上層へ" Background="Salmon" Foreground="White"/>
+          <Button x:Name="btSage" Content="下層へ" Background="Salmon" Foreground="White"/>
+          <Button x:Name="btSaveAll" Content="保存" Background="BlueViolet" Foreground="White"/>
+          <Button Content="元に戻す" IsEnabled="False" Visibility="Hidden"/>
+          <Button Content="クリップボード" />
+          <Border  Height="10"/>
+          <Button x:Name="btRemove" Content="消去" Background="Gray" Foreground="White"/>
+          <Button x:Name="btRemoveAll" Content="全消去" Background="Gray" Foreground="White"/>
+        </StackPanel>
+      </Grid>
+      <!--<ScrollViewer VerticalScrollBarVisibility="Auto">-->
+      <TabControl x:Name="tabControl1">
+        <TabItem Header="基本設定" Padding="12,2">
+          <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+              <GroupBox Header="画像を追加する時の設定" Background="LightCyan">
+                <StackPanel>
+                  <!--<TextBlock Text="画像を追加する時の設定" HorizontalAlignment="Center"/>-->
+                  <GroupBox Header="基準にする階層">
+                    <StackPanel Orientation="Horizontal">
+                      <RadioButton x:Name="rbAddUpper" Content="上層" Padding="0,0,10,0" IsChecked="True"/>
+                      <RadioButton x:Name="rbAddLower" Content="下層"/>
+                      <CheckBox x:Name="cbFocusImage" Content="選択画像" Margin="10,0"/>
+                    </StackPanel>
+                  </GroupBox>
+                  <GroupBox Header="基準にする位置">
+                    <WrapPanel Orientation="Horizontal">
+                      <RadioButton x:Name="rbSetLocateFocusImage" Content="選択画像" Padding="0,0,10,0" IsChecked="True"/>
+                      <RadioButton x:Name="rbSetLocateAllImage" Content="全体画像の左下"/>
+                      <RadioButton x:Name="rbSetLocateDrop" Content="ドロップした場所"/>
+                    </WrapPanel>
+                  </GroupBox>
+                  <GroupBox Header="ファイル名での追加順番">
+                    <StackPanel Orientation="Horizontal">
+                      <RadioButton x:Name="rbtAscent" Content="昇順" Padding="0,0,10,0" IsChecked="True"/>
+                      <RadioButton x:Name="rbtDescent" Content="降順"/>
+                    </StackPanel>
+                  </GroupBox>
+                  <!--<GroupBox Header="選択画像に">
+                    <StackPanel Orientation="Horizontal">
+                      <RadioButton x:Name="rbOverlap" Content="重ねる" Padding="0,0,10,0" IsChecked="True"/>
+                      <RadioButton x:Name="rbNotOverlap" Content="重ねない"/>
+                    </StackPanel>
+                  </GroupBox>-->
+
+
+                  <GroupBox Header="まとめて追加した時のスライド量">
+                    <StackPanel>
+                      <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="左" Margin="5,0,5,0" VerticalAlignment="Center"/>
+                        <Slider x:Name="sliX" Minimum="-10" Maximum="10" Value="-1" Width="100" SmallChange="1" IsSnapToTickEnabled="True"/>
+                        <TextBlock Text="右" Margin="5,0,0,0" VerticalAlignment="Center"/>
+                        <TextBlock x:Name="tbSliX" Margin="5,0" Text="000" VerticalAlignment="Center"/>
+                      </StackPanel>
+                      <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="上" Margin="5,0,5,0" VerticalAlignment="Center"/>
+                        <Slider x:Name="sliY" Minimum="-10" Maximum="10" Value="4" Width="100" SmallChange="1" IsSnapToTickEnabled="True"/>
+                        <TextBlock Text="下" Margin="5,0,0,0" VerticalAlignment="Center"/>
+                        <TextBlock x:Name="tbSliY" Margin="5,0" Text="000" VerticalAlignment="Center"/>
+                      </StackPanel>
+                    </StackPanel>
+                  </GroupBox>
+
+                </StackPanel>
+              </GroupBox>
+              <GroupBox Header="グリッドサイズ" Margin="0,10" Background="LemonChiffon">
+                <StackPanel Orientation="Horizontal">
+                  <Slider x:Name="gridSdr" Value="8" Minimum="1" Maximum="64" Width="128" 
+                          SmallChange="1" IsSnapToTickEnabled="True" IsManipulationEnabled="True" />
+                  <TextBlock x:Name="masuTbk" Text="{Binding ElementName=gridSdr, Path=Value, StringFormat=00}" HorizontalAlignment="Center"/>
+                </StackPanel>
+              </GroupBox>
+              <!--<Button x:Name="age" Content="test" Background="AliceBlue" />
+              <Button x:Name="sage" Content="sage" Background="Aqua" IsEnabled="False"/>
+              <Button x:Name="save" Content="保存"  Background="BlueViolet" IsEnabled="False"/>
+              <Button x:Name="kaiten" Content="kaiten" Background="Khaki" IsEnabled="False"/>
+              <Button x:Name="remove" Content="削除" Background="Salmon" IsEnabled="False"/>-->
+            </StackPanel>
+          </ScrollViewer>
+        </TabItem>
+        <TabItem x:Name="tabItemTransform" Header="変形" IsEnabled="True">
+          <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+              <Button x:Name="btGetTransform" Content="Get" />
+              <Button x:Name="btSetTransform" Content="Set" />              
+
+              <GroupBox Header="回転">
+                <StackPanel>
+                  <DockPanel >
+                    <TextBlock Text="角度" VerticalAlignment="Center" Margin="10,0"/>
+                    <Slider x:Name="sldKaiten" Minimum="0" Maximum="360"/>
+                  </DockPanel>
+                  <WrapPanel>
+                    <TextBox x:Name="tbKaiten" Text="{Binding ElementName=sldKaiten, Path=Value,StringFormat=000.00}"/>
+                    <Button x:Name="btAngle0" Content="上" Tag="0"/>
+                    <Button x:Name="btAngle90" Content="右" Tag="90"/>
+                    <Button x:Name="btAngle180" Content="下" Tag="180"/>
+                    <Button x:Name="btAngle270" Content="左" Tag="270"/>
+                    <Button x:Name="btAngleAdd5" Content="+5" Tag="5"/>
+                    <Button x:Name="btAngleSub5" Content="-5" Tag="-5"/>
+                    <!--<Button x:Name="btAngleAdd10" Content="+10" Tag="+10"/>-->
+                    <Button x:Name="btAngleAdd45" Content="+45" Tag="45"/>
+                  </WrapPanel>
+                </StackPanel>
+              </GroupBox>
+
+              <GroupBox Header="拡大">
+                <StackPanel>
+                  <DockPanel>
+                    <TextBlock Text="拡大率" VerticalAlignment="Center" Margin="10,0"/>
+                    <Slider x:Name="sldScale" Minimum="-3" Maximum="3" Value="1" LargeChange="0.1" TickFrequency="0.01" SmallChange="0.01" IsSnapToTickEnabled="True"/>
+                  </DockPanel>
+                  <WrapPanel>
+                    <TextBox Text="{Binding ElementName=sldScale, Path=Value, StringFormat=#0.000}" MouseWheel="TextBox_MouseWheel"/>
+                    <Button x:Name="btSclae1" Content="x1" Tag="1"/>
+                    <Button x:Name="btSclae2" Content="x2" Tag="2"/>
+                    <Button x:Name="btSclae3" Content="x3" Tag="3"/>
+                    <Button x:Name="btSclae2Divde" Content="x0.5" Tag="0.5" Margin="4,0" RenderTransformOrigin="0.5,0.5"/>
+                    <!--<Button x:Name="btSclae2Now" Content="今x2" Tag="2" Margin="4,0"/>
+                    <Button x:Name="btScla2DivdeNow" Content="今/2" Tag="0.5"/>-->
+                  </WrapPanel>
+                </StackPanel>
+              </GroupBox>
+              <Button x:Name="testbutton" Content="testbutton"/>
+            </StackPanel>
+
+          </ScrollViewer>
+        </TabItem>
+        <TabItem x:Name="tabItemTransparent" Header="透明" >
+          <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+              <Button x:Name="btGetColor" Content="Get" />
+              <Button x:Name="btSetTransparent" Content="Set" />
+              <!--<Button x:Name="btKaiten45" Content="45度回転"/>
+              <Slider x:Name="sldKaiten" Minimum="0" Maximum="360" ValueChanged="sldKaiten_ValueChanged"/>
+              <TextBox x:Name="tbKaiten" Text="{Binding ElementName=sldKaiten, Path=Value,StringFormat=#0.00}"/>
+              <Button x:Name="testbutton" Content="testbutton"/>-->
+            </StackPanel>
+          </ScrollViewer>
+        </TabItem>
+      </TabControl>
+      <!--</ScrollViewer>-->
+    </DockPanel>
+    <ScrollViewer Grid.Column="1" Grid.Row="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+      <Canvas x:Name="canvas1" Grid.Column="1" Grid.Row="1" HorizontalAlignment="Left" VerticalAlignment="Top">
+        <!--<Ellipse Fill="Red" Opacity="0.5" Width="100" Height="100" Canvas.Top="50"/>-->
+        <!--<Button Name="button1" Content="表示1" Canvas.Top="15" Canvas.Left="25"/>
+            <Button Name="button2" Content="表示2" Canvas.Top="45" Canvas.Left="25"/>-->
+      </Canvas>
+    </ScrollViewer>
+  </Grid>
+</Window>
