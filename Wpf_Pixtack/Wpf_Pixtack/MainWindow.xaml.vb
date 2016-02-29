@@ -63,6 +63,10 @@ Class MainWindow
         'Canvasサイズを変更
         canvas1.Width = r.Width
         canvas1.Height = r.Height
+
+        ''移動した画像がマイナス座標じゃなければ終了
+        'If FocusExImage.Location.X > 0 AndAlso FocusExImage.Location.Y > 0 Then Return
+
         'すべての画像の位置を調節
         If r.X <> 0 OrElse r.Y <> 0 Then
             For Each ex As ExImage In CollectionExImage
@@ -82,6 +86,8 @@ Class MainWindow
     'そのズレの分を元の画像に適用すればいい
     Public Sub AjustGrid(ex As ExImage)
         Dim p As Point = GetRect(ex).Location '変形位置取得、今表示している形の位置
+        'Dim p As Point = ex.Location '変形位置取得、今表示している形の位置
+
         Dim g As Integer = gridSdr.Value '指定グリッド数値取得
 
         'ズレの取得、今表示している形の位置がグリッドからどれだけずれているか
@@ -90,9 +96,12 @@ Class MainWindow
 
         '元の画像の位置にズレを適用したPoint作成
         Dim setP As New Point(ex.Location.X - xm, ex.Location.Y - ym)
+        Dim neko As Point = Point.Subtract(setP, ex.Location)
 
-        '座標をセット
-        ex.Location = setP
+        If setP.Equals(ex.Location) = False Then
+            '座標をセット
+            ex.Location = setP
+        End If
     End Sub
 
     'マウスドラッグ移動、グリッドに合わせた移動
@@ -116,6 +125,8 @@ Class MainWindow
 
         '座標をセット
         Dim setP As New Point(x, y)
+        If setP.Equals(ex.Location) Then Return
+
         ex.Location = setP
 
 
@@ -213,7 +224,7 @@ Class MainWindow
             End With
             FocusExImage = ex
             AddHandler ex.ExDragDelta, AddressOf ExImage_DragMove
-            AddHandler ex.Loaded, AddressOf ExImage_Loaded
+            'AddHandler ex.Loaded, AddressOf ExImage_Loaded
             Return bi
         Else
             MsgBox("クリップボードの中に画像はありませんでした")
@@ -296,6 +307,7 @@ Class MainWindow
         End If
         Return newLocate
     End Function
+
     'ウィンドウに画像ファイルがドロップされた時
     Private Sub MainWindow_Drop(sender As Object, e As DragEventArgs) Handles Me.Drop
         If e.Data.GetDataPresent(DataFormats.FileDrop) = False Then Return
@@ -329,15 +341,21 @@ Class MainWindow
 
                 'コレクションに追加してCanvasに表示
                 Dim ex As ExImage = SetCollectionExImage()
-
                 '各プロパティの指定
                 With ex
                     .Source = bmp
                     .SourceImageSize = New Size(bmp.PixelWidth, bmp.PixelHeight)
                     .FileName = listPath(i)
-                    .Location = newLocate
-                    .Height = bmp.PixelHeight 'これとWidthはどうするかな
-                    .Width = bmp.PixelWidth '指定しないと100x100の画像は100.0139になる
+                    .Location = newLocate '元の位置'ここで再描画処理が入るのでGetRectとかで今の値が取得できる
+                    .RenderTransformOrigin = New Point(0.5, 0.5)
+                    .SizeSeem = New Size(bmp.PixelWidth, bmp.PixelHeight) '見た目のサイズ、変形後サイズ
+                    .LocationRenderDiff = New Point(0, 0) '実際と見た目の位置の差
+
+                    '.LocationSeem = newLocate '見かけ上の位置、変形後はこの値が変化する
+                    '.Height = bmp.PixelHeight 'これとWidthはどうするかな
+                    '.Width = bmp.PixelWidth '指定しないと100x100の画像は100.0139になる→
+                    '指定して100にするより無指定で100.0139にしておいたほうが綺麗に見える
+                    '保存時には関係なさそうなので無指定で
                 End With
                 '次の位置
                 newLocate.Offset(x, y)
@@ -347,8 +365,11 @@ Class MainWindow
                 FocusExImage = ex '要る？→要る、画像追加時のCollectionに挿入するときに使う
                 If i = listPath.Count - 1 Then
                     ''最後に追加したExImageのLoadedイベントにメソッド追加
-                    'Call UpdateDisplayZIndex()
-                    AddHandler ex.Loaded, AddressOf ExImage_Loaded
+                    Call UpdateDisplayZIndex()
+                    'AddHandler ex.Loaded, AddressOf ExImage_Loaded
+                    'Call ReRender(ex)
+                    Call AjustLocation()
+
                 End If
             End If
         Next
@@ -397,7 +418,7 @@ Class MainWindow
     '    プログラミング Windows 第6版 第10章 WPF編 - 荒井省三のBlog - Site Home - MSDN Blogs
     'http://blogs.msdn.com/b/shozoa/archive/2014/08/22/using-programming-windows-chapter10.aspx
     'ExImageのRectを取得、回転後のRectにも対応
-    Private Function GetRect(ex As ExImage) As Rect
+    Public Function GetRect(ex As ExImage) As Rect
         'RenderSize版100.0139
         'Dim cVisual As GeneralTransform = ex.TransformToVisual(canvas1)
         'Dim r As Rect = cVisual.TransformBounds(New Rect(ex.RenderSize))
@@ -573,9 +594,10 @@ Class MainWindow
     End Sub
 
     Private Sub age_Click(sender As Object, e As RoutedEventArgs) Handles age.Click
-        Dim r As Rect = GetRect(FocusExImage)
-        Dim u As Rect = GetUnion()
-        Call AjustLocation()
+        'Dim r As Rect = GetRect(FocusExImage)
+        'Dim u As Rect = GetUnion()
+        'Call AjustLocation()
+        Call testApplyRotate()
     End Sub
 
 
@@ -602,7 +624,116 @@ Class MainWindow
 
     Private Sub btKaiten45_Click(sender As Object, e As RoutedEventArgs) Handles btKaiten45.Click
         If FocusExImage Is Nothing Then Return
-        Dim rt As New RotateTransform(45)
+        Dim rt As New RotateTransform(128)
         FocusExImage.RenderTransform = rt
+        'FocusExImage.LocationSeem = GetRect(FocusExImage).Location
+        Call ReRender(FocusExImage)
+    End Sub
+
+
+    '変形
+
+    Private Sub testApplyRotate()
+        '画像の回転角度をタブのスライダーに反映する
+        Dim rent As Transform = FocusExImage.RenderTransform
+
+        Dim rt As RotateTransform = rent
+        sldKaiten.Value = rt.Angle
+
+    End Sub
+
+
+    '変形ゲット
+    Private Sub btGetTransform_Click(sender As Object, e As RoutedEventArgs)
+        If FocusExImage Is Nothing Then Return
+
+        Dim tf As Transform = FocusExImage.RenderTransform
+        Dim rt As RotateTransform = tf
+        rt.Angle = sldKaiten.Value
+    End Sub
+
+    '変形セット
+    Private Sub btSetTransform_Click(sender As Object, e As RoutedEventArgs)
+        If FocusExImage Is Nothing Then Return
+        'Dim rt As New RotateTransform(sldKaiten.Value)
+        'FocusExImage.RenderTransform = rt
+        FocusExImage.RotateAngle = sldKaiten.Value
+
+    End Sub
+
+    Private Sub sldKaiten_ValueChanged(sender As Object, e As RoutedPropertyChangedEventArgs(Of Double))
+        If FocusExImage Is Nothing Then Return
+
+        'Dim ma As Integer = e.NewValue Mod 90
+        'Dim bi As BitmapImage = FocusExImage.Source
+        'Dim tfb As New TransformedBitmap
+        'Dim tf As Transform
+        'tf = New RotateTransform(e.NewValue - ma)
+        'With tfb
+        '    .BeginInit()
+        '    .Source = bi
+        '    .Transform = tf
+        '    .EndInit()
+        '    .Freeze()
+        'End With
+        'Dim enc As New BmpBitmapEncoder
+        'enc.Frames.Add(BitmapFrame.Create(tfb))
+
+        'Dim bs As BitmapSource
+        'Using ms As New MemoryStream()
+        '    enc.Save(ms)
+        '    ms.Seek(0, SeekOrigin.Begin)
+        '    Dim dec = BitmapDecoder.Create(ms, BitmapCreateOptions.None, BitmapCacheOption.OnLoad)
+        '    bs = dec.Frames(0)
+
+        'End Using
+
+        'FocusExImage.Source = bs
+
+        FocusExImage.RotateAngle = e.NewValue ' ma
+
+        Dim r As Rect = GetRect(FocusExImage)
+        FocusExImage.SizeSeem = GetRect(FocusExImage).Size
+        'ExImageコントロールの再描画
+        Call ReRender(FocusExImage)
+        r = GetRect(FocusExImage)
+        FocusExImage.SizeSeem = r.Size
+        FocusExImage.LocationRenderDiff = Point.Subtract(r.Location,FocusExImage.Location)
+        'Call AjustGrid(FocusExImage)
+        Call AjustLocation()
+    End Sub
+
+
+    '    [VB.NET][WPF] WPF で 描画を更新する | オールトの雲
+    'http://ooltcloud.expressweb.jp/201311/article_10192523.html
+
+    '再描画
+    Public Sub ReRender(ex As ExImage)
+        ex.Dispatcher.Invoke(Threading.DispatcherPriority.Render, Sub()
+
+                                                                  End Sub)
+    End Sub
+
+    Private Sub testbutton_Click(sender As Object, e As RoutedEventArgs) Handles testbutton.Click
+        Dim r As Rect = GetRect(FocusExImage)
+        Dim p As Point = FocusExImage.Location
+        Dim ld As Point = FocusExImage.LocationRenderDiff
+
+    End Sub
+
+
+
+
+    '透明
+    Private Sub btGetColor_Click(sender As Object, e As RoutedEventArgs)
+        canvas1.Cursor = Cursors.Cross
+
+
+
+
+    End Sub
+
+    Private Sub btSetTransparent_Click(sender As Object, e As RoutedEventArgs)
+        canvas1.Cursor = Cursors.Arrow
     End Sub
 End Class

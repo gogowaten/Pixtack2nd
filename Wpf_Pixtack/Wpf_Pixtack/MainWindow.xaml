@@ -73,7 +73,7 @@
         </StackPanel>
       </Grid>
       <!--<ScrollViewer VerticalScrollBarVisibility="Auto">-->
-      <TabControl>
+      <TabControl x:Name="tabControl1">
         <TabItem Header="基本設定" Padding="12,2">
           <ScrollViewer VerticalScrollBarVisibility="Auto">
             <StackPanel>
@@ -134,7 +134,7 @@
                   <TextBlock x:Name="masuTbk" Text="{Binding ElementName=gridSdr, Path=Value, StringFormat=00}" HorizontalAlignment="Center"/>
                 </StackPanel>
               </GroupBox>
-              <Button x:Name="age" Content="age" Background="AliceBlue" />
+              <Button x:Name="age" Content="test" Background="AliceBlue" />
               <Button x:Name="sage" Content="sage" Background="Aqua" IsEnabled="False"/>
               <Button x:Name="save" Content="保存"  Background="BlueViolet" IsEnabled="False"/>
               <Button x:Name="kaiten" Content="kaiten" Background="Khaki" IsEnabled="False"/>
@@ -142,10 +142,27 @@
             </StackPanel>
           </ScrollViewer>
         </TabItem>
-        <TabItem Header="tab2">
+        <TabItem x:Name="tabItemTransform" Header="変形" IsEnabled="True">
           <ScrollViewer VerticalScrollBarVisibility="Auto">
             <StackPanel>
+              <Button x:Name="btGetTransform" Content="Get" Click="btGetTransform_Click"/>
+              <Button x:Name="btSetTransform" Content="Set" Click="btSetTransform_Click"/>
               <Button x:Name="btKaiten45" Content="45度回転"/>
+              <Slider x:Name="sldKaiten" Minimum="0" Maximum="360" ValueChanged="sldKaiten_ValueChanged"/>
+              <TextBox x:Name="tbKaiten" Text="{Binding ElementName=sldKaiten, Path=Value,StringFormat=#0.00}"/>
+              <Button x:Name="testbutton" Content="testbutton"/>
+            </StackPanel>
+          </ScrollViewer>
+        </TabItem>
+        <TabItem x:Name="tabItemTransparent" Header="透明" >
+          <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+              <Button x:Name="btGetColor" Content="Get" Click="btGetColor_Click"/>
+              <Button x:Name="btSetTransparent" Content="Set" Click="btSetTransparent_Click"/>
+              <!--<Button x:Name="btKaiten45" Content="45度回転"/>
+              <Slider x:Name="sldKaiten" Minimum="0" Maximum="360" ValueChanged="sldKaiten_ValueChanged"/>
+              <TextBox x:Name="tbKaiten" Text="{Binding ElementName=sldKaiten, Path=Value,StringFormat=#0.00}"/>
+              <Button x:Name="testbutton" Content="testbutton"/>-->
             </StackPanel>
           </ScrollViewer>
         </TabItem>

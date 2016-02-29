@@ -2,12 +2,26 @@
 Imports System.Windows.Controls.Canvas
 Imports System.Collections.Specialized
 Imports System.Globalization
+Imports System.ComponentModel
 
 Public Class ExImage
     Inherits Image
-    Private syoki As Point
+    'Implements System.ComponentModel.INotifyPropertyChanged
+
+    Private syoki As Point 'マウスクリック位置記録
+    'Private DragStartPoint As Point
+
     Public Event ExDragDelta(sender As Object, e As DragDeltaEventArgs)
+    'Public Event PropertyChanged As PropertyChangedEventHandler Implements INotifyPropertyChanged.PropertyChanged
     Private Main As MainWindow
+
+    ''プロパティ変更時に通知、動的バインディングで双方向の時に必要
+    'Public Sub NotifyPropertyChanged(propertyName As String)
+    '    If propertyName IsNot Nothing Then
+    '        'イベント発生させる
+    '        RaiseEvent PropertyChanged(Me, New PropertyChangedEventArgs(propertyName))
+    '    End If
+    'End Sub
 
     Public Sub New(o As MainWindow)
         Main = o
@@ -16,10 +30,17 @@ Public Class ExImage
     'マウス左クリックダウンの時
     Protected Overrides Sub OnMouseLeftButtonDown(e As MouseButtonEventArgs)
         MyBase.OnMouseLeftButtonDown(e)
+        'GetPositionで得られるクリックした位置は見た目そのものに対する位置
+        '□の左上の角なら(0,0)、右に45度回転して◇のときの(0,0)は上の角になる
+        '右に135度回転して◇の時の(0,0)は右の角になる
         syoki = e.GetPosition(Me)
+        'DragStartPoint = Mouse.GetPosition(Main.canvas1)
+
         Me.CaptureMouse()
 
         Call Main.AjustGrid(Me) 'グリッドに合わせる
+
+
         Main.FocusExImage = Me 'クリックしたExImageを記録
         Call Main.UpdateDisplayZIndex() 'textBlockのZIndex表示更新
     End Sub
@@ -29,6 +50,7 @@ Public Class ExImage
         MyBase.OnMouseMove(e)
         If e.LeftButton = MouseButtonState.Pressed Then
             Dim p As Point = Point.Subtract(e.GetPosition(Me), syoki)
+            'Dim p As Point = Point.Subtract(Mouse.GetPosition(Main.canvas1), syoki)
             'RaiseEvent ExDragDelta(Me, New DragDeltaEventArgs(p.X, p.Y))
 
             Dim x As Integer = p.X
@@ -48,9 +70,6 @@ Public Class ExImage
         Main.StatusBarDisplayUpdate(Me)
     End Sub
 
-    ''元の位置と変形後(実際の描画)の位置の差
-    'Public Property RenderDiffLocate As Point
-
 
     '座標、親コンテナのCanvasに対する自身の左上の座標
     'Canvas.GetLeft,Canvas.GetTopで得られる値
@@ -64,9 +83,21 @@ Public Class ExImage
             '値が変更されたら、表示位置も変更してステータスバーの表示も更新
             SetLeft(Me, value.X)
             SetTop(Me, value.Y)
+            '再描画！！！！
+            Main.ReRender(Me)
             Main.StatusBarDisplayUpdate(Me)
         End Set
     End Property
+
+    '元の位置と変形後(実際の描画)の位置の差
+    Public Property LocationRenderDiff As Point
+
+    ''見た目での座標、変形後の左上の位置
+    'Public Property LocationSeem As Point
+
+    '見た目のサイス、変形後サイズ
+    Public Property SizeSeem As Size
+
 
     '元の画像サイズ
     Public Property SourceImageSize As Size
@@ -74,8 +105,25 @@ Public Class ExImage
     '元の画像ファイル名
     Public Property FileName As String
 
-
+    '回転角度
+    Private _RotateAngle As Double
+    Public Property RotateAngle As Double
+        Get
+            Return _RotateAngle
+        End Get
+        Set(value As Double)
+            _RotateAngle = value
+            Call SetRotate()
+        End Set
+    End Property
+    Private Sub SetRotate()
+        Dim rt As New RotateTransform(RotateAngle)
+        RenderTransform = rt
+        'LayoutTransform = rt
+    End Sub
 End Class
+
+
 
 
 '汎用ジェネリックコレクション その2 ObservableCollection/ReadOnlyObservableCollection (System.Collections.ObjectModel) - Programming/.NET Framework/コレクション - 総武ソフトウェア推進所
