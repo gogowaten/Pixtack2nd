@@ -63,6 +63,32 @@ Public Class ExThumb
         'ステータスバー更新
         Call Main.RefreshStatusBar(Me)
     End Sub
+
+    'Protected Overrides Sub OnMouseMove(e As MouseEventArgs)
+    '    MyBase.OnMouseMove(e)
+
+    '    '色取得、マウスの下にある画像から取得
+    '    If Main.IsGetColor Then
+    '        Dim p As Point = e.GetPosition(Me)
+    '        Dim b As BitmapSource = Me.TemplateImage.Source
+    '        Dim x As Integer = p.X - 1
+    '        Dim y As Integer = p.Y - 1
+    '        If x < 0 Then x = 0
+    '        If y < 0 Then y = 0
+
+    '        Call Main.GetColor(x, y, b)
+
+    '    End If
+    'End Sub
+
+    'Protected Overrides Sub OnMouseLeftButtonDown(e As MouseButtonEventArgs)
+    '    MyBase.OnMouseLeftButtonDown(e)
+    '    '色取得モードなら終了させる
+    '    If Main.IsGetColor Then
+    '        Main.Cursor = Cursors.Arrow
+    '        Main.IsGetColor = False
+    '    End If
+    'End Sub
 End Class
 
 

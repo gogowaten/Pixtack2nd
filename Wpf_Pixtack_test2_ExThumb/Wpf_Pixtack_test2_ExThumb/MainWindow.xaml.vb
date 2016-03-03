@@ -6,7 +6,7 @@ Imports System.Windows.Controls.Canvas
 Class MainWindow
     'すべてのExThumbを入れておくリストコレスション
     Private OCollectionExThumb As New ObservableCollectionExThumb(Me)
-
+    Public IsGetColor As Boolean 'クリックで色取得フラグ
 
 
 
@@ -158,7 +158,7 @@ Class MainWindow
 
 
     'ファイルパスからBitmapImage(画像)を作成して返す
-    Private Function GetBitmapImage(filePath As String) As BitmapImage
+    Private Function GetBitmapImage(filePath As String) As BitmapSource
         Dim bmp As New BitmapImage
         Try
             Using fs As New FileStream(filePath, FileMode.Open, FileAccess.Read)
@@ -175,8 +175,8 @@ Class MainWindow
             bmp = Nothing
             Return bmp
         End Try
-
-        Return bmp
+        Dim fcb As New FormatConvertedBitmap(bmp, PixelFormats.Bgra32, Nothing, 0)
+        Return fcb
     End Function
 
 
@@ -286,7 +286,8 @@ Class MainWindow
         'ファイルパスの数だけExThumb作成して表示
         For i As Integer = 0 To listPath.Count - 1
             'ファイルパスから画像を取得
-            Dim bmp As BitmapImage = GetBitmapImage(listPath(i))
+            'Dim bmp As BitmapImage = GetBitmapImage(listPath(i))
+            Dim bmp As BitmapSource = GetBitmapImage(listPath(i))
             If bmp IsNot Nothing Then
 
                 'コレクションに追加してCanvasに表示
@@ -893,4 +894,131 @@ Class MainWindow
         tbSliY.Text = $"{e.NewValue * sliY.Value:000}"
     End Sub
 
+
+
+
+    'クリックで色取得
+    Private Sub btGetColor_Click(sender As Object, e As RoutedEventArgs) Handles btGetColor.Click
+        '色取得モードにする、カーソルの形を十字にする、もう一度押されたら元に戻す
+        If IsGetColor Then
+            IsGetColor = False
+            Cursor = Cursors.Arrow
+            RemoveHandler canvas1.PreviewMouseLeftButtonDown, AddressOf canvas1_PreviewMouseLeftButtonDown
+            RemoveHandler canvas1.PreviewMouseMove, AddressOf canvas1_PreviewMouseMove
+            gridGettingColor.Visibility = Visibility.Collapsed
+        Else
+            IsGetColor = True
+            Cursor = Cursors.Cross
+            AddHandler canvas1.PreviewMouseLeftButtonDown, AddressOf canvas1_PreviewMouseLeftButtonDown
+            AddHandler canvas1.PreviewMouseMove, AddressOf canvas1_PreviewMouseMove
+            gridGettingColor.Visibility = Visibility.Visible
+        End If
+    End Sub
+
+    'マウスの下にある画像から色取得して取得中の色を表示、下に透過されているものは無視される
+    Public Sub GetColor(x As Integer, y As Integer, bs As BitmapSource)
+        'クリックされた位置の1ｘ1の画像を切り取り作成
+        Dim cb As New CroppedBitmap(bs, New Int32Rect(x, y, 1, 1))
+        'ストライドがよくわからないから決め打ちするためにBgra32に変換
+        Dim cfb As New FormatConvertedBitmap(cb, PixelFormats.Bgra32, Nothing, 0)
+        Dim pixels(3) As Byte
+        cfb.CopyPixels(pixels, 4, 0) 'strideは4で決め打ち
+        Dim a As Integer = pixels(3)
+        Dim b As Integer = pixels(2)
+        Dim g As Integer = pixels(1)
+        Dim r As Integer = pixels(0)
+        Dim c As Color = Color.FromArgb(a, b, g, r)
+        '取得した色でブラシ作成して表示
+        Dim scb As New SolidColorBrush(c)
+        rectGetingColor.Fill = scb
+        rectGetingColor.Tag = c 'TagにColorを入れておく
+        tbGetingColr.Text = $"ARGB={a},{r},{g},{b}"
+
+
+        If r + g + b > 400 Then
+            tbGetingColr.Foreground = Brushes.Black
+        Else
+            tbGetingColr.Foreground = Brushes.White
+        End If
+    End Sub
+    '選択色を透明にする
+    Private Sub btSetTransparent_Click(sender As Object, e As RoutedEventArgs) Handles btSetTransparent.Click
+        Call ToTransparent(FocusExThumb)
+    End Sub
+    '選択色を透明にする
+    Private Sub ToTransparent(ex As ExThumb)
+        If ex Is Nothing Then Return
+        'Tagに入れておいた色を取り出す
+        If rectSelectColor.Tag Is Nothing Then Return
+
+        Dim col As Color = rectSelectColor.Tag
+        Dim r As Byte = col.R
+        Dim g As Byte = col.G
+        Dim b As Byte = col.B
+        Dim a As Byte = col.A
+
+        Dim bs As BitmapSource = ex.TemplateImage.Source
+        Dim w As Integer = bs.PixelWidth
+        Dim h As Integer = bs.PixelHeight
+        Dim stride As Integer = w * 4 ' 4は決め打ち、PixelFormatをBgra32に固定しているから
+        Dim i As Integer = stride * h - 1
+        Dim pixels(i) As Byte
+        bs.CopyPixels(pixels, stride, 0)
+
+        For y As Integer = 0 To h - 1
+            For x As Integer = 0 To w - 1
+                Dim ptr As Integer = (y * stride) + x * 4
+                '色が一致したらアルファ値を０にする
+                If pixels(ptr + 3) = a AndAlso pixels(ptr + 2) = r AndAlso pixels(ptr + 1) = g AndAlso pixels(ptr + 0) = b Then
+                    pixels(ptr + 3) = 0
+                End If
+            Next
+        Next
+
+        Dim nbs As BitmapSource = BitmapSource.Create(w, h, 96, 96, PixelFormats.Bgra32, Nothing, pixels, stride)
+        ex.TemplateImage.Source = nbs
+    End Sub
+
+
+    ''Canvas上での左クリック、画像のあるところだけで発生
+    Private Sub canvas1_PreviewMouseLeftButtonDown(sender As Object, e As MouseButtonEventArgs) 'Handles canvas1.PreviewMouseLeftButtonDown
+        '色取得モードなら終了させる
+        If IsGetColor Then
+            Cursor = Cursors.Arrow
+            IsGetColor = False
+            RemoveHandler canvas1.PreviewMouseMove, AddressOf canvas1_PreviewMouseMove
+            RemoveHandler canvas1.PreviewMouseLeftButtonDown, AddressOf canvas1_PreviewMouseLeftButtonDown
+
+            Dim c As Color = rectGetingColor.Tag
+            rectSelectColor.Fill = New SolidColorBrush(c)
+            rectSelectColor.Tag = c 'TagにColorを入れておく
+            tbSelectColorARGB.Text = $"ARGB={c.A},{c.R},{c.G},{c.B}"
+
+            gridGettingColor.Visibility = Visibility.Collapsed
+        End If
+
+    End Sub
+
+    Private Sub canvas1_PreviewMouseMove(sender As Object, e As MouseEventArgs)
+        '画像から色取得
+        'Canvas全体画像を作成、クリックした場所の色を取得
+        Dim p As Point = e.GetPosition(canvas1) 'クリック位置
+        Dim r As Rect = GetUnion() 'Canvas全体のRect取得
+
+        '描画先を作成
+        Dim dv As New DrawingVisual
+        Using dc As DrawingContext = dv.RenderOpen
+            Dim vb As New VisualBrush(canvas1) 'Canvas内に表示されているもの自体を使ってVisualBrush作成
+            dc.DrawRectangle(vb, Nothing, r) '四角形にブラシで塗り、サイズそのまま
+        End Using
+
+        '描画、切り上げザイズの範囲に、そのままの大きさで描画
+        'PixelFormatはPbgra32以外だとエラー？Bgra32はエラーになる
+        Dim rtb As New RenderTargetBitmap(r.Width, r.Height, 96, 96, PixelFormats.Pbgra32)
+        rtb.Render(dv)
+
+        '色を取得して表示
+        Call GetColor(p.X, p.Y, rtb)
+
+    End Sub
 End Class
