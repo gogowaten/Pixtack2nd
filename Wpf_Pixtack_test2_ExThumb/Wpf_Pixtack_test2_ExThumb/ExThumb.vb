@@ -9,21 +9,35 @@ Public Class ExThumb
     Private Main As MainWindow
     Public Sub SetMain(owner As MainWindow)
         Main = owner
+        'Dim img As ExImage = Me.Template.FindName("image1", Me)
+        'TemplateImage = img
     End Sub
 
-    Public Property TemplateImage As ExImage
-    Public Property FileName As String
 
+    Public Property TemplateImage As ExImage
+    'Public TemplateImage As ExImage
+    Public Property FileName As String
+    'Private _ImageSource As BitmapSource
+    'Public Property ImageSource As BitmapSource
+    '    Get
+    '        Return _ImageSource
+    '    End Get
+    '    Set(value As BitmapSource)
+    '        _ImageSource = value
+
+    '    End Set
+    'End Property
 
     '座標、親コンテナのCanvasに対する自身の左上の座標
     'Canvas.GetLeft,Canvas.GetTopで得られる値
-    Private _Location As Point
-    Public Property Location As Point
+    '内部座標(Canvasにセットする方)
+    Private _LocationInside As Point
+    Public Property LocationInside As Point
         Get
-            Return _Location
+            Return _LocationInside
         End Get
         Set(value As Point)
-            _Location = value
+            _LocationInside = value
             '値が変更されたら、表示位置も変更してステータスバーの表示も更新
             SetLeft(Me, value.X)
             SetTop(Me, value.Y)
@@ -33,12 +47,19 @@ Public Class ExThumb
         End Set
     End Property
 
+    '見た目上の座標(グリッドに合わせる方)
+    Public Property LocationSurface As Point
+
+
+
+
     'マウスクリックダウン
     '右でも左でも選択画像を変更するのでステータスバーも更新
     Protected Overrides Sub OnMouseDown(e As MouseButtonEventArgs)
         MyBase.OnMouseDown(e)
         Main.FocusExThumb = Me
-        Call Main.AjustGrid(Me)
+        'Call Main.AjustLocation()
+        Call Main.AdjustGrid(Me)
         'ステータスバー更新
         Call Main.RefreshStatusBar(Me)
     End Sub
@@ -120,8 +141,11 @@ Public Class ExImage
     End Sub
     Public Property SourceSize As Size
 
+    '拡大縮小などの変形時の描画品質設定
     Protected Overrides Sub OnRender(dc As DrawingContext)
         MyBase.OnRender(dc)
-        VisualBitmapScalingMode = BitmapScalingMode.NearestNeighbor
+        VisualBitmapScalingMode = BitmapScalingMode.NearestNeighbor 'ニアレストネイバー(最近傍法)
+        VisualBitmapScalingMode = BitmapScalingMode.Fant 'HighQualityと同等
+
     End Sub
 End Class

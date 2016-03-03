@@ -25,7 +25,7 @@ Class MainWindow
             Else
                 mihon.Source = value.TemplateImage.Source ' value.Source
                 '表示位置とCanvasサイズ調整、これは実行しなくてもいいかなあ
-                Call AjustLocation()
+                Call AdjustLocation()
             End If
 
             ''FocusExThumbの中身が入れ替わった時実行
@@ -39,10 +39,10 @@ Class MainWindow
 
         Else
             Dim allR As Rect = GetUnion()
-            Dim l As Point = ex.Location
+            Dim l As Point = ex.LocationInside
             stSaveSize.Content = $"保存サイズ({allR.Width}x{allR.Height})"
 
-            stLocate.Content = $"座標({ex.Location.ToString})"
+            stLocate.Content = $"座標({ex.LocationInside.ToString})"
 
             stImaSize.Content = $"サイズ({GetRect(ex).Size})"
             Dim bmp As ImageSource = ex.TemplateImage.Source
@@ -64,9 +64,9 @@ Class MainWindow
     'でもグリッドに合わせることになるのは変形後の今表示している形の位置なので
     '変形後の位置がグリッドかどれだけずれているかを求めて
     'そのズレの分を元の画像に適用すればいい
-    Public Sub AjustGrid(ex As ExThumb)
-        'Dim p As Point = GetRect(ex).Location '変形位置取得、今表示している形の位置
-        Dim p As Point = ex.Location '変形位置取得、今表示している形の位置
+    Public Sub AdjustGrid(ex As ExThumb)
+        Dim p As Point = GetRect(ex).Location '変形位置取得、今表示している形の位置
+        'Dim p As Point = ex.LocationInside '変形位置取得、
 
         Dim g As Integer = gridSdr.Value '指定グリッド数値取得
 
@@ -74,11 +74,16 @@ Class MainWindow
         Dim xm As Double = p.X Mod g '横位置をグリッドで割った余り
         Dim ym As Double = p.Y Mod g '縦位置を～
 
+        Dim np As New Point(ex.LocationInside.X - xm, ex.LocationInside.Y - ym)
+        ex.LocationInside = np
+
+
+
     End Sub
 
     '位置調整、移動後の座標がマイナスだった時に全部の画像をマイナス分をプラスにして調整する
     '、左上の画像を削除して空白ができた時に
-    Public Sub AjustLocation()
+    Public Sub AdjustLocation()
         'すべての画像がピッタリ収まるRect
         Dim r As Rect = GetUnion()
         'Canvasサイズを変更
@@ -92,7 +97,7 @@ Class MainWindow
         If r.X <> 0 OrElse r.Y <> 0 Then
             For Each ex As ExThumb In OCollectionExThumb
                 '座標をセット
-                ex.Location -= r.Location
+                ex.LocationInside -= r.Location
             Next
         End If
     End Sub
@@ -107,7 +112,7 @@ Class MainWindow
         Dim g As Integer = gridSdr.Value
         Dim ex As ExThumb = DirectCast(sender, ExThumb)
         '元の形の位置取得、
-        'これは左クリックダウンイベントの時にAjustGridメソッドでグリッドに合わせた位置になっているはずなので
+        'これは左クリックダウンイベントの時にAdjustGridメソッドでグリッドに合わせた位置になっているはずなので
         'あとはマウスの移動距離がグリッド値を超えたら隣のグリッドへ移動させる感じ
 
         ''Pixtack紫陽花と同じ方式
@@ -124,7 +129,7 @@ Class MainWindow
         Dim ny As Double = y - (y Mod g) + GetTop(ex)
 
         '座標をセット
-        ex.Location = New Point(nx, ny)
+        ex.LocationInside = New Point(nx, ny)
 
         'SetLeft(ex, nx)
         'SetTop(ex, ny)
@@ -148,7 +153,7 @@ Class MainWindow
 
     'マウスドラッグ終了後
     Private Sub _FocusExThumb_DragCompleted(sender As Object, e As DragCompletedEventArgs) Handles _FocusExThumb.DragCompleted
-        Call AjustLocation()
+        Call AdjustLocation()
     End Sub
 
 
@@ -177,6 +182,9 @@ Class MainWindow
 
     Private Function SetOCollectionExThumb() As ExThumb
         Dim ex As New ExThumb()
+        'ResourcesのTemplateを取得してExThumbに適用
+        ex.Template = Me.Resources.Item("ct")
+
         ex.SetMain(Me) 'MainWindowをExThumbに登録する
 
         'リストコレクションに追加、ZIndexは追加した時にObservableOCExThumbの方で処理される
@@ -200,8 +208,6 @@ Class MainWindow
             End If
         End If
 
-        'ResourcesのTemplateを取得してExThumbに適用
-        ex.Template = Me.Resources.Item("ct")
 
         'Canvasに追加して表示
         canvas1.Children.Add(ex)
@@ -209,8 +215,8 @@ Class MainWindow
         '追加したExThumbを再描画！！！！！！！！！！！！！！！！！！！！
         '再描画しないとTemplateが取得できないのでその中のExImageも取得できない
         Call ReRender(ex)
-
-
+        'InvalidateVisual()
+        'ex.InvalidateVisual()
         Return ex
 
     End Function
@@ -228,7 +234,7 @@ Class MainWindow
         Dim y As Integer = tbSliY.Text
         If FocusExThumb IsNot Nothing Then
             'スライド
-            newLocate = FocusExThumb.Location
+            newLocate = FocusExThumb.LocationInside
             If rbSetLocateFocusImage.IsChecked Then
                 '選択画像に重ねる
                 newLocate.Offset(x, y)
@@ -243,11 +249,11 @@ Class MainWindow
     '連続追加時の二枚目以降の画像の位置取得
     Private Function GetSlideLocation(ex As ExThumb) As Point
         '最初の画像の位置
-        Dim newLocate As Point = ex.Location
+        Dim newLocate As Point = ex.LocationInside
         Dim x As Integer = tbSliX.Text
         Dim y As Integer = tbSliY.Text
-        If ex.Location.X < 0 Then x = 0
-        If ex.Location.Y < 0 Then y = 0
+        If ex.LocationInside.X < 0 Then x = 0
+        If ex.LocationInside.Y < 0 Then y = 0
         newLocate.Offset(x, y)
         Return newLocate
     End Function
@@ -292,16 +298,17 @@ Class MainWindow
                 img.RenderTransformOrigin = New Point(0.5, 0.5)
                 img.Source = bmp
 
+                'Dim cc As New ColorConvertedBitmap(bmp, New ColorContext(bmp.Format), New ColorContext(PixelFormats.Pbgra32), bmp.Format)
 
 
                 '各プロパティの指定
                 With ex
                     .TemplateImage = img
-                    .RenderTransformOrigin = New Point(0.5, 0.5)
+                    '.RenderTransformOrigin = New Point(0.5, 0.5)
                     '.Source = bmp
                     '.SourceImageSize = New Size(bmp.PixelWidth, bmp.PixelHeight)
                     .FileName = listPath(i)
-                    .Location = newLocate '元の位置
+                    .LocationInside = newLocate '元の位置
                     '.RenderTransformOrigin = New Point(0.5, 0.5)
                     '.SizeSeem = New Size(bmp.PixelWidth, bmp.PixelHeight) '見た目のサイズ、変形後サイズ
                     '.LocationRenderDiff = New Point(0, 0) '実際と見た目の位置の差
@@ -373,17 +380,16 @@ Class MainWindow
         'Return r
 
         'SourceのPixelWidth版100
-        Dim gt As GeneralTransform = ex.TransformToVisual(canvas1)
-        Dim b As BitmapImage = ex.TemplateImage.Source
-        'Dim bs As BitmapSource = ex.TemplateImage.Source
-        Dim r As Rect = gt.TransformBounds(New Rect(New Size(b.PixelWidth, b.PixelHeight)))
+        'Dim gt As GeneralTransform = ex.TransformToVisual(canvas1)
+        'Dim s As Size = ex.TemplateImage.SourceSize
+        'Dim r As Rect = gt.TransformBounds(New Rect(s))
 
-        '内部のImage
-        gt = ex.TemplateImage.TransformToVisual(canvas1)
-        r = gt.TransformBounds(New Rect(New Size(b.PixelWidth, b.PixelHeight)))
+        '内部のImage、PixelWidth版100
+        Dim gt As GeneralTransform = ex.TemplateImage.TransformToVisual(canvas1)
+        Dim s As Size = ex.TemplateImage.SourceSize
+        Dim r As Rect ' = gt.TransformBounds(New Rect(s))
 
-
-
+        r = gt.TransformBounds(New Rect(s))
 
         Return r
     End Function
@@ -553,11 +559,11 @@ Class MainWindow
     Private Function AddFromClipboard() As BitmapImage
         Dim bi As New BitmapImage 'system.windows.media.imaging.bitmapimage
         If My.Computer.Clipboard.ContainsImage Then
-            Dim b = My.Computer.Clipboard.GetData(DataFormats.Bitmap) 'system.drawing.bitmap
-            Dim dib As MemoryStream = My.Computer.Clipboard.GetData(DataFormats.Dib) 'system.io.memorystream
-            Dim em = Clipboard.GetData(DataFormats.EnhancedMetafile) 'エクセルの図形とか取得できる
-            Dim mp = Clipboard.GetData(DataFormats.MetafilePicture)
-            Dim ti = Clipboard.GetData(DataFormats.Tiff)
+            'Dim b = My.Computer.Clipboard.GetData(DataFormats.Bitmap) 'system.drawing.bitmap
+            'Dim dib As MemoryStream = My.Computer.Clipboard.GetData(DataFormats.Dib) 'system.io.memorystream
+            'Dim em = Clipboard.GetData(DataFormats.EnhancedMetafile) 'エクセルの図形とか取得できる
+            'Dim mp = Clipboard.GetData(DataFormats.MetafilePicture)
+            'Dim ti = Clipboard.GetData(DataFormats.Tiff)
 
 
 
@@ -600,10 +606,16 @@ Class MainWindow
             'ファイルパスからの時はBitmapImageだったけど
             'これはBitmapSourceになっているのが気になる
             Dim ex As ExThumb = SetOCollectionExThumb()
+            Dim img As Image = GetTemplateImage(ex)
+
+
+            img.Source = bbb
             With ex
-                '.Source = bbb ' bf ' bs
+                '.TemplateImage.Source = bbb ' bf ' bs
+                .TemplateImage = img
+                .RenderTransformOrigin = New Point(0.5, 0.5)
                 '.SourceImageSize = New Size(bs.PixelWidth, bs.PixelHeight)
-                .Location = GetNewLocation()
+                .LocationInside = GetNewLocation()
 
             End With
             FocusExThumb = ex
@@ -618,14 +630,14 @@ Class MainWindow
     End Function
 
     'クリップボードから画像追加
-    Private Sub Button_Click(sender As Object, e As RoutedEventArgs)
+    Private Sub Button_Click(sender As Object, e As RoutedEventArgs) Handles btClipboard.Click
         Call AddFromClipboard()
     End Sub
 
     'Private Sub age_Click(sender As Object, e As RoutedEventArgs) Handles age.Click
     '    'Dim r As Rect = GetRect(FocusExThumb)
     '    'Dim u As Rect = GetUnion()
-    '    'Call AjustLocation()
+    '    'Call AdjustLocation()
     '    'Call testApplyRotate()
     'End Sub
 
@@ -645,17 +657,23 @@ Class MainWindow
         '画像追加時のスライド量のスライダーのValueChangedイベントに付加
         AddHandler sliX.ValueChanged, AddressOf sliX_ValueChanged
         AddHandler sliY.ValueChanged, AddressOf sliY_ValueChanged
+        AddHandler gridSdr.ValueChanged, AddressOf gridSdr_ValueChanged
+
         '上のイベントを実行してスライド量の表示更新
         sliX_ValueChanged(sliX, New RoutedPropertyChangedEventArgs(Of Double)(0, sliX.Value))
         sliY_ValueChanged(sliY, New RoutedPropertyChangedEventArgs(Of Double)(0, sliY.Value))
 
+        '拡大縮小描画モード
+        AddHandler rbScaleHigh.Checked, AddressOf rbScaleHigh_Checked
+        AddHandler rbScaleNearest.Checked, AddressOf rbScaleHigh_Checked
+        AddHandler rbScaleNormal.Checked, AddressOf rbScaleHigh_Checked
     End Sub
 
 
 
 
     '変形
-
+    '選択画像の変形情報をタブに取り込む
     Private Sub GetSetRotate()
         '画像の回転角度をタブのスライダーに反映する
         Dim tf As Transform = FocusExThumb.TemplateImage.RenderTransform
@@ -696,6 +714,17 @@ Class MainWindow
         sldScale.Value = scale
 
 
+        '描画モード
+        Dim img As ExImage = FocusExThumb.TemplateImage
+        Dim mode As BitmapScalingMode = RenderOptions.GetBitmapScalingMode(img)
+        Select Case mode
+            Case BitmapScalingMode.Fant
+                rbScaleHigh.IsChecked = True
+            Case BitmapScalingMode.NearestNeighbor
+                rbScaleNearest.IsChecked = True
+            Case BitmapScalingMode.Unspecified
+                rbScaleNormal.IsChecked = True
+        End Select
     End Sub
 
 
@@ -762,6 +791,8 @@ Class MainWindow
         ''End Using
 
         ''FocusExThumb.Source = bs
+
+
 
 
 
@@ -839,4 +870,27 @@ Class MainWindow
         End If
         sldScale.Value = i
     End Sub
+
+    '描画品質設定ラジオボタン
+    Private Sub rbScaleHigh_Checked(sender As Object, e As RoutedEventArgs)
+        If FocusExThumb Is Nothing Then Return
+
+        Dim img As ExImage = FocusExThumb.TemplateImage
+        Select Case True
+            Case rbScaleNormal.IsChecked
+                RenderOptions.SetBitmapScalingMode(img, BitmapScalingMode.Unspecified)
+            Case rbScaleNearest.IsChecked
+                RenderOptions.SetBitmapScalingMode(img, BitmapScalingMode.NearestNeighbor)
+            Case rbScaleHigh.IsChecked
+                RenderOptions.SetBitmapScalingMode(img, BitmapScalingMode.Fant)
+        End Select
+
+    End Sub
+
+    Private Sub gridSdr_ValueChanged(sender As Object, e As RoutedPropertyChangedEventArgs(Of Double))
+        tbSliX.Text = $"{e.NewValue * sliX.Value:000}"
+
+        tbSliY.Text = $"{e.NewValue * sliY.Value:000}"
+    End Sub
+
 End Class

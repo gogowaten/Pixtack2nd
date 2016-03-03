@@ -11,8 +11,11 @@
       <local:ExImage x:Name="image1"/>
     </ControlTemplate>
   </Window.Resources>
+  
+  <!--.NET TIPS：WPF／UWP：コントロールのエッジをシャープに描画するには？［XAML］ - ＠IT
+http://www.atmarkit.co.jp/ait/articles/1602/17/news034.html-->
 
-  <Grid>
+  <Grid><!--UseLayoutRounding="True"をつけると中の要素の座標に小数点が付いた時に整数に丸めるからぼやけることがなくなるけど指定した位置から外れることになる-->
     <Grid.ColumnDefinitions>
       <ColumnDefinition x:Name="gridColumn0" Width="240"/>
       <ColumnDefinition/>
@@ -61,17 +64,21 @@
 
 
     <DockPanel Grid.Row="1">
-      <Grid Name="grid2" Height="200" Background="{Binding ElementName=canvas1, Path=Background}" DockPanel.Dock="Top">
+      <Grid Name="grid2" Height="200" DockPanel.Dock="Top">
+        
         <local:HighQualiyImage x:Name="mihonUpper" Width="100" Height="80" HorizontalAlignment="Left" VerticalAlignment="Bottom"/>
+        <StackPanel Width="100">
         <local:HighQualiyImage x:Name="mihon" Width="100" Height="80"/>
+          <TextBlock Text="選択画像" HorizontalAlignment="Center"/>
+        </StackPanel>
         <local:HighQualiyImage x:Name="mihonUnder" Width="100" Height="80" HorizontalAlignment="Left" VerticalAlignment="Top"/>
-        <TextBlock Text="stackpanel grid" VerticalAlignment="Top"/>
-        <StackPanel Width="72" HorizontalAlignment="Right">
+        
+        <StackPanel Width="70" HorizontalAlignment="Right">
           <Button x:Name="btAge" Content="上層へ" Background="Salmon" Foreground="White"/>
           <Button x:Name="btSage" Content="下層へ" Background="Salmon" Foreground="White"/>
           <Button x:Name="btSaveAll" Content="保存" Background="BlueViolet" Foreground="White"/>
           <Button Content="元に戻す" IsEnabled="False" Visibility="Hidden"/>
-          <Button Content="クリップボード" />
+          <Button x:Name="btClipboard" Content="クリップボード" />
           <Border  Height="10"/>
           <Button x:Name="btRemove" Content="消去" Background="Gray" Foreground="White"/>
           <Button x:Name="btRemoveAll" Content="全消去" Background="Gray" Foreground="White"/>
@@ -113,7 +120,7 @@
                   </GroupBox>-->
 
 
-                  <GroupBox Header="まとめて追加した時のスライド量">
+                  <GroupBox Header="まとめて追加する時のスライド量">
                     <StackPanel>
                       <StackPanel Orientation="Horizontal">
                         <TextBlock Text="左" Margin="5,0,5,0" VerticalAlignment="Center"/>
@@ -150,8 +157,8 @@
         <TabItem x:Name="tabItemTransform" Header="変形" IsEnabled="True">
           <ScrollViewer VerticalScrollBarVisibility="Auto">
             <StackPanel>
-              <Button x:Name="btGetTransform" Content="Get" />
-              <Button x:Name="btSetTransform" Content="Set" />              
+              <Button x:Name="btGetTransform" Content="Get" Background="Khaki"/>
+              <!--<Button x:Name="btSetTransform" Content="Set" />-->              
 
               <GroupBox Header="回転">
                 <StackPanel>
@@ -175,6 +182,13 @@
 
               <GroupBox Header="拡大">
                 <StackPanel>
+                  <GroupBox Header="描画モード">
+                  <WrapPanel>
+                    <RadioButton x:Name="rbScaleHigh" Content="綺麗" Margin="5,0" IsChecked="True" />
+                    <RadioButton x:Name="rbScaleNormal" Content="普通" Margin="5,0"/>
+                    <RadioButton x:Name="rbScaleNearest" Content="特殊" Margin="5,0"/>
+                  </WrapPanel>
+                  </GroupBox>
                   <DockPanel>
                     <TextBlock Text="拡大率" VerticalAlignment="Center" Margin="10,0"/>
                     <Slider x:Name="sldScale" Minimum="-3" Maximum="3" Value="1" LargeChange="0.1" TickFrequency="0.01" SmallChange="0.01" IsSnapToTickEnabled="True"/>
@@ -190,7 +204,7 @@
                   </WrapPanel>
                 </StackPanel>
               </GroupBox>
-              <Button x:Name="testbutton" Content="testbutton"/>
+              <!--<Button x:Name="testbutton" Content="testbutton"/>-->
             </StackPanel>
 
           </ScrollViewer>
