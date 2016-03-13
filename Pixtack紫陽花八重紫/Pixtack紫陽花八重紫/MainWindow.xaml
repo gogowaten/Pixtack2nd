@@ -3,11 +3,11 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:Wpf_Pixtack_test2_ExThumb"
+        xmlns:local="clr-namespace:Pixtack紫陽花八重紫"
         mc:Ignorable="d"
         Title="MainWindow" Height="700" Width="554" AllowDrop="True" Icon="紫陽花1_4_12.ico"
         >
-  
+
   <Window.Resources>
     <ControlTemplate x:Key="ct" TargetType="local:ExThumb">
       <local:ExImage x:Name="image1"/>
@@ -47,7 +47,7 @@
         <BulletDecorator.Bullet>
           <Grid Width="{TemplateBinding FontSize}"  Height="{TemplateBinding FontSize}" Grid.Column="0">
             <Ellipse Fill="White" Stroke="LightGray" />
-            <Ellipse Fill="White" Stroke="OliveDrab" x:Name="CheckMark3"/>            
+            <Ellipse Fill="White" Stroke="OliveDrab" x:Name="CheckMark3"/>
             <Ellipse Margin="3" Fill="OliveDrab" x:Name="CheckMark2" />
           </Grid>
         </BulletDecorator.Bullet>
@@ -59,9 +59,9 @@
           <Setter TargetName="CheckMark3" Property="Visibility" Value="Hidden"/>
         </Trigger>
       </ControlTemplate.Triggers>
-      
+
     </ControlTemplate>
-    
+
     <!--ボタンの外観-->
     <Style x:Key="btstyle" TargetType="Button">
       <!--<Setter Property="Background" Value="{Binding ba}"/>-->
@@ -69,7 +69,8 @@
       <Setter Property="BorderBrush" Value="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"/>
       <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"/>
       <Setter Property="Padding" Value="2"/>
-      <Setter Property="FocusVisualStyle" Value="{x:Null}"/><!--フォーカス時の点線を表示しない-->
+      <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+      <!--フォーカス時の点線を表示しない-->
 
       <Setter Property="Template">
         <Setter.Value>
@@ -151,7 +152,7 @@ http://www.atmarkit.co.jp/ait/articles/1602/17/news034.html-->
           <MenuItem Header="上層へ(_U)" Command="MoveUp" InputGestureText="PageUp"/>
           <MenuItem Header="下層へ(_D)" Command="MoveDown" InputGestureText="PageDown"/>
         </MenuItem>
-        <MenuItem Header="表示(_V)">          
+        <MenuItem Header="表示(_V)">
           <MenuItem x:Name="miViewThree" Header="レイアウト3ペイン" Click="LeyoutDisplayThree" IsChecked="{Binding ElementName=rbLayout3, Path=IsChecked,Mode=TwoWay}" IsCheckable="True"/>
           <MenuItem x:Name="miViewTwo" Header="レイアウト2ペイン" Click="LeyoutDisplayTwo" IsChecked="{Binding ElementName=rbLayout2, Path=IsChecked,Mode=TwoWay}" IsCheckable="True"/>
           <MenuItem x:Name="miViewOne" Header="レイアウト1ペイン" Click="LeyoutDisplayOne" IsChecked="{Binding ElementName=rbLayout1, Path=IsChecked, Mode=TwoWay}" IsCheckable="True"/>
