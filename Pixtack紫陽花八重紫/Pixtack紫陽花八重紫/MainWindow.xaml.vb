@@ -2,6 +2,7 @@
 Imports System.Windows.Controls.Primitives
 Imports System.Windows.Controls.Panel
 Imports System.Windows.Controls.Canvas
+Imports System.ComponentModel
 
 Class MainWindow
     'すべてのExThumbを入れておくリストコレスション
@@ -81,9 +82,11 @@ Class MainWindow
 
             'stLocate.Content = $"座標({ex.LocationInside.ToString})"
             stLocate.Content = $"座標({l.ToString})"
+            '今のサイズ
             stImaSize.Content = $"サイズ({GetRect(ex).Size:#.00})"
-            Dim bmp As ImageSource = ex.TemplateImage.Source
 
+            '元のサイズ
+            'Dim bmp As ImageSource = ex.TemplateImage.Source
             stMotoSize.Content = $"{ex.TemplateImage.SourceSize.ToString()}"
         End If
     End Sub
@@ -530,8 +533,15 @@ Class MainWindow
 
             '画像エンコーダ選択
             Dim enc As BitmapEncoder = GetEncoder(dialogSave.FilterIndex)
+            '画像メタデータ作成
+            Dim meta As BitmapMetadata = GetMetadate(dialogSave.FilterIndex)
+
+
+            ''エンコーダに画像フレームを渡す
+            'Dim bf As BitmapFrame = BitmapFrame.Create(rtb)
+            'enc.Frames.Add(bf)
             'エンコーダに画像フレームを渡す
-            Dim bf As BitmapFrame = BitmapFrame.Create(rtb)
+            Dim bf As BitmapFrame = BitmapFrame.Create(rtb, Nothing, meta, Nothing)
             enc.Frames.Add(bf)
 
             'ファイルとして保存
@@ -555,6 +565,7 @@ Class MainWindow
     '画像保存時のエンコーダ選択
     Private Function GetEncoder(i As Integer) As BitmapEncoder
         Dim enc As BitmapEncoder = Nothing
+
         Select Case i
             Case 1
                 enc = New PngBitmapEncoder
@@ -570,6 +581,56 @@ Class MainWindow
                 enc = New TiffBitmapEncoder
         End Select
         Return enc
+    End Function
+
+    '画像メタデータ作成
+    Private Function GetMetadate(i As Integer) As BitmapMetadata
+        Dim meta As BitmapMetadata = Nothing
+        Dim appName As String = My.Application.Info.AssemblyName
+        Select Case i
+            Case 1
+                '1つしか書き込めない、最後のものだけが反映される
+                meta = New BitmapMetadata("png")
+                'meta.SetQuery("/tEXt/Software", "Pixtack紫陽花八重紫")
+                'meta.SetQuery("/tEXt/Comment", "nice day")
+                meta.SetQuery("/tEXt/Software", appName) 'ソフトウェア名
+            Case 2
+                meta = New BitmapMetadata("jpg")
+                'meta.ApplicationName = "Pixtack紫陽花八重紫"
+                'meta.Comment = "komtento"
+                ''撮影者名
+                'Dim ss As New List(Of String)({"Author", "午後わてん"})
+                ''ss.Add("午後わてん")
+                'Dim eoc As New ObjectModel.ReadOnlyCollection(Of String)(ss)
+                'meta.Author = eoc
+
+                ''著作者名
+                'meta.Copyright = "Copyright午後わてん"
+
+                meta.SetQuery("/app1/ifd/{ushort=305}", "Pixtack紫陽花八重紫")
+                'meta.SetQuery("/app1/ifd/exif/{Ushort=37510}", "koment")
+            Case 3
+                'meta = New BitmapMetadata("jpg")
+            Case 4
+                'どれも無視されている？
+                meta = New BitmapMetadata("gif")
+                meta.SetQuery("/xmp/xmp:CreatorTool", "Pixtack紫陽花八重紫")
+                'meta.SetQuery("/xmp/dc:description", "descriptionnnnnnnn")
+            Case 5
+                meta = New BitmapMetadata("tiff")
+                meta.ApplicationName = appName 'ソフトウェア名
+                'meta.Comment = "komentooooooo"
+                ''撮影者名
+                'Dim ss As New List(Of String)({"Authorおーはー"})
+                ''ss.Add("午後わてん")
+                'Dim eoc As New ObjectModel.ReadOnlyCollection(Of String)(ss)
+                'meta.Author = eoc
+
+                ''著作者名
+                'meta.Copyright = "Copyrightこぴぃらいと"
+        End Select
+        Return meta
+
     End Function
     '画像ファイルとして保存
     Private Sub save_Click(sender As Object, e As RoutedEventArgs) Handles btSaveAll.Click
@@ -633,6 +694,72 @@ Class MainWindow
         ''http://bbs.wankuma.com/index.cgi?mode=al2&namber=51404&KLOG=86
         ''Imageコントロールの拡大縮小表示の品質設定
         'RenderOptions.SetBitmapScalingMode(mihon, BitmapScalingMode.HighQuality)
+
+        '設定読込
+        'Left = My.Settings.MainWindow_Left
+        'Top = My.Settings.MainWindow_Top
+
+        With My.Settings.MainWindow_Bounds
+            Top = .Top
+            Left = .Left
+            Width = .Width
+            Height = .Height
+        End With
+
+
+
+        ''背景色コンボボックス
+        'cmbBackColor.ItemsSource = GetType(Colors).GetProperties
+
+    End Sub
+
+    'アプリ終了時の動作
+    Private Sub MainWindow_Closing(sender As Object, e As CancelEventArgs) Handles Me.Closing
+        'ウィンドウの位置記録
+        If WindowState = WindowState.Normal Then
+            'My.Settings.MainWindow_Top = Top
+            'My.Settings.MainWindow_Left = Left
+            'My.Settings.Save()
+            ''MySettings.Default.MainWindow_Top = Top
+            ''MySettings.Default.MainWindow_Left = Left
+            ''MySettings.Default.Save()
+
+            My.Settings.MainWindow_Bounds = New Rect(Left, Top, Width, Height)
+            My.Settings.Save()
+            ''↑↓どっちがいいの？
+            'MySettings.Default.MainWindow_Bounds = New Rect(Top, Left, Width, Height)
+            'MySettings.Default.Save()
+        End If
+    End Sub
+
+    '    Settings を使った WPF でのアプリケーション設定の保存 (ウィンドウの表示位置、サイズの保存) | プログラマーズ雑記帳
+    'http://yohshiy.blog.fc2.com/blog-entry-253.html
+
+    '    [Tips] 設定ファイルを追加する | HIRO's.NET Blog
+    'http://blog.hiros-dot.net/?p=5155
+
+    '設定のリセット
+    Private Sub Button_Click_1(sender As Object, e As RoutedEventArgs)
+
+        'Left = Settings1.Default.MainWindow_Left
+        'Top = Settings1.Default.MainWindow_Top
+
+        'ウィンドウの位置リセット、ブログ用幅
+        'With Settings1.Default.MainWindow_Bounds
+        '    Left = .Left
+        '    Top = .Top
+        '    Width = 554 ' .Width
+        '    Height = .Height
+        'End With
+
+        ''カラーパレット表示
+        'Dim cp As New ColorPalette
+        'cp.Owner = Me
+        'Dim b As Brush
+        'If cp.ShowDialog Then
+        '    b = cp.rectMihon.Fill
+        'End If
+
     End Sub
 
 
@@ -760,8 +887,24 @@ Class MainWindow
         AddHandler rbScaleHigh.Checked, AddressOf rbScaleHigh_Checked
         AddHandler rbScaleNearest.Checked, AddressOf rbScaleHigh_Checked
         AddHandler rbScaleNormal.Checked, AddressOf rbScaleHigh_Checked
+
+        'スライダーのマウスホイールイベントに
+        AddHandler sliX.MouseWheel, AddressOf sliX_MouseWheel
+        AddHandler sliY.MouseWheel, AddressOf sliX_MouseWheel
+        AddHandler gridSdr.MouseWheel, AddressOf sliX_MouseWheel
+
+
     End Sub
 
+    'スライダーのマウスホイール操作
+    Private Sub sliX_MouseWheel(sender As Object, e As MouseWheelEventArgs) ' Handles sliX.MouseWheel
+        Dim s As Slider = DirectCast(sender, Slider)
+        If e.Delta > 0 Then
+            s.Value += s.SmallChange
+        Else
+            s.Value -= s.SmallChange
+        End If
+    End Sub
 
 
 
@@ -773,14 +916,16 @@ Class MainWindow
         'Dim gt As GeneralTransform = tf.Inverse '逆変換
         Dim rt As New RotateTransform
         Dim st As New ScaleTransform
-        Dim skt As New SkewTransform
+        Dim skewT As New SkewTransform
 
         Dim angle As Double = 0
-        Dim scale As Double = 1
-        Dim skew As Double = 0
+        Dim scaleX As Double = 1
+        Dim scaleY As Double = 1
+        Dim skewX As Double = 0
+        Dim skewY As Double = 0
         If tf.Value = Matrix.Identity Then
             'Transformが空なら角度0
-            angle = 0
+            'angle = 0
 
         Else
             'TransformをRotateTransformに変換してAngle取得
@@ -795,17 +940,20 @@ Class MainWindow
                         angle = rt.Angle
                     Case st.GetType
                         st = t
-                        scale = st.ScaleX
-                    Case skt.GetType
-                        skt = t
+                        scaleX = st.ScaleX
+                        scaleY = st.ScaleY
+                    Case skewT.GetType
+                        skewT = t
                 End Select
             Next
             'angle = rt.Angle
         End If
         'スライダーのValueにセット
         sldKaiten.Value = angle
-        sldScale.Value = scale
-
+        sldScaleX.Value = scaleX
+        sldScaleY.Value = scaleY
+        sldSkewX.Value = skewT.AngleX
+        sldSkewY.Value = skewT.AngleY
 
         '描画モード
         Dim img As ExImage = FocusExThumb.TemplateImage
@@ -823,7 +971,11 @@ Class MainWindow
     'スライダーのリセット、画像変形のリセット
     Private Sub ResetTransform()
         sldKaiten.Value = 0
-        sldScale.Value = 1
+        sldScaleX.Value = 1
+        sldScaleY.Value = 1
+        sldSkewY.Value = 0
+        sldSkewX.Value = 0
+
     End Sub
 
 
@@ -833,20 +985,15 @@ Class MainWindow
         'Thumbを回転じゃなくて中のExImageを回転させればマウス移動の方向が見た目通りになる
         Dim img As ExImage = FocusExThumb.TemplateImage
         Dim rt As New RotateTransform(e.NewValue)
-        'Dim ts As Transform = img.RenderTransform
-        'Dim rt As RotateTransform = ts
 
         ''画像の角度がスライダーの値と同じなら何もしないで終了
         'If rt.Angle = e.NewValue Then Return
 
         rt.Angle = e.NewValue
-        Dim st As New ScaleTransform(sldScale.Value, sldScale.Value)
-        Dim tCollection As New TransformCollection
-        tCollection.Add(st)
-        tCollection.Add(rt)
-        Dim tGroup As New TransformGroup
-        tGroup.Children = tCollection
-        img.RenderTransform = tGroup
+        Dim st As New ScaleTransform(sldScaleX.Value, sldScaleY.Value)
+        Dim skew As New SkewTransform(sldSkewX.Value, sldSkewY.Value)
+        Call TransformExImage(rt, st, skew)
+
 
         ''Dim ma As Integer = e.NewValue Mod 90
         ''Dim bi As BitmapImage = FocusExThumb.Source
@@ -874,12 +1021,16 @@ Class MainWindow
 
         ''FocusExThumb.Source = bs
 
-
-
-
-
     End Sub
 
+    Private Sub sldTransform_MouseWheel(sender As Object, e As MouseWheelEventArgs) Handles sldKaiten.MouseWheel, sldSkewX.MouseWheel, sldSkewY.MouseWheel
+        Dim sld As Slider = DirectCast(sender, Slider)
+        If e.Delta > 0 Then
+            sld.Value += sld.SmallChange
+        Else
+            sld.Value -= sld.SmallChange
+        End If
+    End Sub
     '回転、上下左右ボタン
     Private Sub btAngle_Click(sender As Object, e As RoutedEventArgs) Handles btAngle90.Click, btAngle180.Click, btAngle0.Click, btAngle270.Click
         If FocusExThumb Is Nothing Then Return
@@ -900,29 +1051,77 @@ Class MainWindow
     End Sub
 
     '拡大スライダー
-    Private Sub sldScale_ValueChanged(sender As Object, e As RoutedPropertyChangedEventArgs(Of Double)) Handles sldScale.ValueChanged
+    'Private Sub sldScaleX_ValueChanged(sender As Object, e As RoutedPropertyChangedEventArgs(Of Double)) Handles sldScaleX.ValueChanged
+    '    If FocusExThumb Is Nothing Then Return
+
+    '    ''画像の拡大率がスライダーと同じなら何もしないで終了
+    '    'If st.ScaleX = e.NewValue Then Return
+
+    '    Dim yScale As Double = sldScaleY.Value
+    '    Dim st As New ScaleTransform(e.NewValue, yScale)
+    '    Dim rt As New RotateTransform(sldKaiten.Value)
+
+    '    Call ScaleChange(st, rt)
+    'End Sub
+    Private Sub sldScaleY_ValueChanged(sender As Object, e As RoutedPropertyChangedEventArgs(Of Double)) Handles sldScaleX.ValueChanged, sldScaleY.ValueChanged
         If FocusExThumb Is Nothing Then Return
+        Dim sld As Slider = sender
+        Dim x As Double
+        Dim y As Double
+        Dim nv As Double = e.NewValue
 
-        'Thumbじゃなくて中のExImageを変形させればマウス移動の方向が見た目通りになる
-        Dim img As ExImage = FocusExThumb.TemplateImage
-        'Dim tf As Transform = img.RenderTransform
-        'Dim st As ScaleTransform = tf
+        If cbTateyokoSync.IsChecked Then
+            x = nv
+            y = nv
+            If sender.Equals(sldScaleX) Then
+                'x = e.NewValue
+                'y = sldScaleY.Value
+                sldScaleY.Value = y
+                e.Handled = False
+            Else
+                'x = sldScaleX.Value
+                'y = e.NewValue
+                sldScaleX.Value = x
+                e.Handled = False
+            End If
+        ElseIf sender.Equals(sldScaleX) Then
+            x = e.NewValue
+            y = sldScaleY.Value
+        Else
+            x = sldScaleX.Value
+            y = e.NewValue
+        End If
 
-        ''画像の拡大率がスライダーと同じなら何もしないで終了
-        'If st.ScaleX = e.NewValue Then Return
-
-        Dim st As New ScaleTransform(e.NewValue, e.NewValue)
+        Dim st As New ScaleTransform(x, y)
         Dim rt As New RotateTransform(sldKaiten.Value)
-        Dim tfCollection As New TransformCollection
-        tfCollection.Add(st)
-        tfCollection.Add(rt)
-        Dim tfGroup As New TransformGroup
-        tfGroup.Children = tfCollection
+        Dim skew As New SkewTransform(sldSkewX.Value, sldSkewY.Value)
 
-        img.RenderTransform = tfGroup
+
+
+        'Dim xScale As Double = sldScaleX.Value
+        'Dim yScale As Double = e.NewValue
+        'If xScale = yScale Then
+
+        'End If
+        'Dim st As New ScaleTransform(xScale, e.NewValue)
+        'Dim rt As New RotateTransform(sldKaiten.Value)
+
+        'Call ScaleChange(st, rt)
+        Call TransformExImage(rt, st, skew)
     End Sub
+    'Private Sub ScaleChange(st As ScaleTransform, rt As RotateTransform)
+    '    Dim tfCollection As New TransformCollection
+    '    tfCollection.Add(st)
+    '    tfCollection.Add(rt)
+    '    Dim tfGroup As New TransformGroup
+    '    tfGroup.Children = tfCollection
 
-    Private Sub sldScale_MouseWheel(sender As Object, e As MouseWheelEventArgs) Handles sldScale.MouseWheel
+    '    'Thumbじゃなくて中のExImageを変形させればマウス移動の方向が見た目通りになる
+    '    Dim img As ExImage = FocusExThumb.TemplateImage
+    '    img.RenderTransform = tfGroup
+    'End Sub
+
+    Private Sub sldScaleX_MouseWheel(sender As Object, e As MouseWheelEventArgs) Handles sldScaleX.MouseWheel, sldScaleY.MouseWheel
         Dim sld As Slider = DirectCast(sender, Slider)
         If e.Delta > 0 Then
             sld.Value += 0.01
@@ -931,15 +1130,23 @@ Class MainWindow
         End If
     End Sub
 
-    '拡大ボタン
-    Private Sub tbScale_Click(sender As Object, e As RoutedEventArgs) Handles btSclae1.Click,
+
+    '拡大縮小ボタン
+    Private Sub tbScaleX_Click(sender As Object, e As RoutedEventArgs) Handles btSclae1.Click,
                                             btSclae2.Click, btSclae2Divde.Click, btSclae3.Click
         Dim scalevalue As Double = 1 * DirectCast(sender, Button).Tag
-        sldScale.Value = scalevalue
+        sldScaleX.Value = scalevalue
     End Sub
+    Private Sub tbScaleY_Click(sender As Object, e As RoutedEventArgs) Handles btSclaeY1.Click,
+                                            btSclaeY2.Click, btSclaeY2Divde.Click, btSclaeY3.Click
+        Dim scalevalue As Double = 1 * DirectCast(sender, Button).Tag
+        sldScaleY.Value = scalevalue
+    End Sub
+
+
     'Private Sub tbScaleNow_Click(sender As Object, e As RoutedEventArgs) Handles btScla2DivdeNow.Click, btSclae2Now.Click
-    '    Dim scalevalue As Double = sldScale.Value * DirectCast(sender, Button).Tag
-    '    sldScale.Value = scalevalue
+    '    Dim scalevalue As Double = sldScaleX.Value * DirectCast(sender, Button).Tag
+    '    sldScaleX.Value = scalevalue
     'End Sub
 
     Private Sub TextBox_MouseWheel(sender As Object, e As MouseWheelEventArgs)
@@ -950,8 +1157,51 @@ Class MainWindow
         Else
             i -= 0.01
         End If
-        sldScale.Value = i
+        'sldScaleX.Value = i
+
+        Dim sld As Slider = DirectCast(tb.Tag, Slider)
+        sld.Value = i
+
     End Sub
+
+    '傾斜
+    Private Sub sldtest_ValueChanged(sender As Object, e As RoutedPropertyChangedEventArgs(Of Double)) Handles sldSkewX.ValueChanged, sldSkewY.ValueChanged
+        If FocusExThumb Is Nothing Then Return
+        Dim x As Double
+        Dim y As Double
+        If sender.Equals(sldSkewX) Then
+            x = e.NewValue
+            y = sldSkewY.Value
+        Else
+            x = sldSkewX.Value
+            y = e.NewValue
+        End If
+
+
+        Dim skew As New SkewTransform(x, y, 0.5, 0.5)
+        Dim scale As New ScaleTransform(sldScaleX.Value, sldScaleY.Value)
+        Dim rotate As New RotateTransform(sldKaiten.Value)
+        Call TransformExImage(rotate, scale, skew)
+
+    End Sub
+
+    '変形総合
+    Private Sub TransformExImage(rotate As RotateTransform, scale As ScaleTransform, skew As SkewTransform)
+        Dim tCollection As New TransformCollection
+        tCollection.Add(rotate)
+        tCollection.Add(scale)
+        tCollection.Add(skew)
+        Dim tGroupe As New TransformGroup
+        tGroupe.Children = tCollection
+
+        'Thumbじゃなくて中のExImageを変形させればマウス移動の方向が見た目通りになる
+        Dim img As ExImage = FocusExThumb.TemplateImage
+        img.RenderTransform = tGroupe
+
+    End Sub
+
+
+
 
     '描画品質設定ラジオボタン
     Private Sub rbScaleHigh_Checked(sender As Object, e As RoutedEventArgs)
@@ -993,6 +1243,24 @@ Class MainWindow
             AddHandler canvas1.PreviewMouseLeftButtonDown, AddressOf canvas1_PreviewMouseLeftButtonDown
             AddHandler canvas1.PreviewMouseMove, AddressOf canvas1_PreviewMouseMove
             gridGettingColor.Visibility = Visibility.Visible
+        End If
+    End Sub
+
+    'WPFサンプル:ShowメソッドとShowDaialogメソッド:Gushwell's C# Dev Notes
+    'http://gushwell.ldblog.jp/archives/52285322.html
+
+    'カラーパレットから色選択
+    Private Sub btGetTransparent_Click(sender As Object, e As RoutedEventArgs) Handles btGetTransparentColor.Click
+        Dim cp As New ColorPalette
+        cp.Owner = Me
+
+        Dim b As SolidColorBrush = rectSelectColor.Fill
+
+        If cp.ShowDialog(b.Color) Then
+            With cp
+                tbSelectColorARGB.Text = $"ARGB={ .sldA.Value},{ .sldR.Value},{ .sldG.Value},{ .sldB.Value}"
+            End With
+            rectSelectColor.Fill = cp.rectMihon.Fill
         End If
     End Sub
 
@@ -1111,6 +1379,8 @@ Class MainWindow
     End Sub
 
     Private Sub btAddRectangle_Click(sender As Object, e As RoutedEventArgs) Handles btAddRectangle.Click
+        If FocusExThumb Is Nothing Then Return
+
         Dim im As ExImage = FocusExThumb.TemplateImage
         Dim t = im.TemplatedParent
 
@@ -1198,5 +1468,64 @@ Class MainWindow
         '変形のリセット
         Call ResetTransform()
     End Sub
+
+    '絶対値でサイズ変更
+    Private Sub btScale_Click(sender As Object, e As RoutedEventArgs) Handles btSetScale.Click
+        If FocusExThumb Is Nothing Then Return
+        'Imageサイズ変更
+        '拡大率をいくつにすれば絶対値になるか計算して拡大率スライダーに値指定する
+
+        Dim w As Integer = numeWidth.Value
+        Dim h As Integer = numeHeight.Value
+
+        '0が指定されていたら1にする
+        If w = 0 Then w = 1
+        If h = 0 Then h = 1
+        '絶対値に変換
+        w = Math.Abs(w)
+        h = Math.Abs(h)
+
+        Dim r As Rect = GetRect(FocusExThumb)
+        'If w <> r.Width Then
+        '    sldScaleX.Value *= w / r.Width
+        'End If
+        'If h <> r.Height Then
+        '    sldScaleY.Value *= h / r.Height
+        'End If
+
+        Dim nx As Double = sldScaleX.Value * w / r.Width
+        Dim ny As Double = sldScaleY.Value * h / r.Height
+        If cbTateyokoSync.IsChecked Then
+            If rbPriorityWidth.IsChecked Then
+                ny = nx
+            Else
+                nx = ny
+            End If
+        End If
+        sldScaleX.Value = nx
+        sldScaleY.Value = ny
+        Call ReRender(FocusExThumb)
+        Call GetSetScale()
+
+        'Dim wr As Double = w / r.Width
+        'Dim hr As Double = h / r.Height
+        'Dim ssx As Double = sldScaleX.Value
+        'Dim ssy As Double = sldScaleY.Value
+        'Dim ssxwr As Double = ssx * wr
+        'Dim ssyhr As Double = ssy * hr
+        'sldScaleX.Value = ssxwr
+        'sldScaleY.Value = ssyhr
+    End Sub
+    Private Sub btGetScale_Click(sender As Object, e As RoutedEventArgs) Handles btGetScale.Click
+        Call GetSetScale()
+    End Sub
+    Private Sub GetSetScale()
+        If FocusExThumb Is Nothing Then Return
+        Dim r As Rect = GetRect(FocusExThumb)
+        numeHeight.Value = r.Height
+        numeWidth.Value = r.Width
+
+    End Sub
+
 
 End Class

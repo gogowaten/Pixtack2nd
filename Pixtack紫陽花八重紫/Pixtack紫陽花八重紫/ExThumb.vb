@@ -13,6 +13,10 @@ Public Class ExThumb
         'TemplateImage = img
     End Sub
 
+    Public Sub New()
+        VisualBitmapScalingMode = BitmapScalingMode.Fant
+
+    End Sub
 
     Public Property TemplateImage As ExImage
     'Public TemplateImage As ExImage
@@ -139,6 +143,9 @@ End Class
 'Thumbの中に入れるImage、元画像のサイズを入れるだけに作った
 Public Class ExImage
     Inherits Image
+    Public Sub New()
+        VisualBitmapScalingMode = BitmapScalingMode.Fant
+    End Sub
     Protected Overrides Sub OnRenderSizeChanged(sizeInfo As SizeChangedInfo)
         MyBase.OnRenderSizeChanged(sizeInfo)
         Dim neko As BitmapSource = Me.Source

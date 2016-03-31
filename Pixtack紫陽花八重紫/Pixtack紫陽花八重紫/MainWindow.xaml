@@ -1,15 +1,15 @@
-﻿<Window x:Class="MainWindow"
+﻿<Window
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Pixtack紫陽花八重紫"
+        xmlns:System="clr-namespace:System;assembly=mscorlib" x:Class="MainWindow"
         mc:Ignorable="d"
-        Title="MainWindow" Height="700" Width="554" AllowDrop="True" Icon="紫陽花1_4_12.ico"
-        >
-
+        Title="MainWindow" Height="703" Width="902" AllowDrop="True" Icon="紫陽花1_4_12.ico" WindowStartupLocation="Manual">
+  <!--Width=554-->
   <Window.Resources>
-    <ControlTemplate x:Key="ct" TargetType="local:ExThumb">
+    <ControlTemplate x:Key="ct" TargetType="{x:Type local:ExThumb}">
       <local:ExImage x:Name="image1"/>
     </ControlTemplate>
 
@@ -41,7 +41,7 @@
       </Setter>
     </Style>
 
-    <ControlTemplate x:Key="test" TargetType="RadioButton">
+    <ControlTemplate x:Key="test" TargetType="{x:Type RadioButton}">
       <BulletDecorator Background="Transparent">
         <!--チェックあり状態-->
         <BulletDecorator.Bullet>
@@ -63,7 +63,7 @@
     </ControlTemplate>
 
     <!--ボタンの外観-->
-    <Style x:Key="btstyle" TargetType="Button">
+    <Style x:Key="btstyle" TargetType="{x:Type Button}">
       <!--<Setter Property="Background" Value="{Binding ba}"/>-->
       <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"/>
       <Setter Property="BorderBrush" Value="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"/>
@@ -74,16 +74,16 @@
 
       <Setter Property="Template">
         <Setter.Value>
-          <ControlTemplate TargetType="Button">
+          <ControlTemplate TargetType="{x:Type Button}">
 
             <Grid>
 
               <Rectangle Fill="{TemplateBinding Background}" 
-                         Stroke="{TemplateBinding BorderBrush}"/>
+    						Stroke="{TemplateBinding BorderBrush}"/>
 
               <ContentPresenter ContentTemplate="{TemplateBinding ContentTemplate}"
-                        HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                        VerticalAlignment="{TemplateBinding Property=VerticalContentAlignment}" Margin="{TemplateBinding Padding}"/>
+    						HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+    						VerticalAlignment="{TemplateBinding Property=VerticalContentAlignment}" Margin="{TemplateBinding Padding}"/>
 
             </Grid>
 
@@ -111,6 +111,102 @@
       </Setter>
     </Style>
 
+    <!--ラジオボタン-->
+    <Style x:Key="FocusVisual">
+      <Setter Property="Control.Template">
+        <Setter.Value>
+          <ControlTemplate>
+            <Rectangle Margin="2" SnapsToDevicePixels="true" Stroke="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" StrokeThickness="1" StrokeDashArray="1 2"/>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+    <SolidColorBrush x:Key="RadioButton.Static.Background" Color="#FFFFFFFF"/>
+    <SolidColorBrush x:Key="RadioButton.Static.Border" Color="#FF707070"/>
+    <Style x:Key="OptionMarkFocusVisual">
+      <Setter Property="Control.Template">
+        <Setter.Value>
+          <ControlTemplate>
+            <Rectangle Margin="14,0,0,0" SnapsToDevicePixels="true" Stroke="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" StrokeThickness="1" StrokeDashArray="1 2"/>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+    <SolidColorBrush x:Key="RadioButton.MouseOver.Background" Color="#FFF3F9FF"/>
+    <SolidColorBrush x:Key="RadioButton.MouseOver.Border" Color="#FF5593FF"/>
+    <SolidColorBrush x:Key="RadioButton.MouseOver.Glyph" Color="#FF212121"/>
+    <SolidColorBrush x:Key="RadioButton.Disabled.Background" Color="#FFE6E6E6"/>
+    <SolidColorBrush x:Key="RadioButton.Disabled.Border" Color="#FFBCBCBC"/>
+    <SolidColorBrush x:Key="RadioButton.Disabled.Glyph" Color="#FF707070"/>
+    <SolidColorBrush x:Key="RadioButton.Pressed.Background" Color="#FFD9ECFF"/>
+    <SolidColorBrush x:Key="RadioButton.Pressed.Border" Color="#FF3C77DD"/>
+    <SolidColorBrush x:Key="RadioButton.Pressed.Glyph" Color="#FF212121"/>
+    <SolidColorBrush x:Key="RadioButton.Static.Glyph" Color="#FF212121"/>
+    <Style x:Key="RadioButtonStyle1" TargetType="{x:Type RadioButton}">
+      <Setter Property="FocusVisualStyle" Value="{StaticResource FocusVisual}"/>
+      <Setter Property="Background" Value="{StaticResource RadioButton.Static.Background}"/>
+      <Setter Property="BorderBrush" Value="{StaticResource RadioButton.Static.Border}"/>
+      <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="{x:Type RadioButton}">
+            <Grid x:Name="templateRoot" Background="Transparent" SnapsToDevicePixels="True">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+              </Grid.ColumnDefinitions>
+              <Border x:Name="radioButtonBorder" BorderBrush="{TemplateBinding BorderBrush}" 
+                      BorderThickness="{TemplateBinding BorderThickness}" Background="{TemplateBinding Background}"
+                      CornerRadius="100" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                      Margin="1,1,2,1" VerticalAlignment="{TemplateBinding VerticalContentAlignment}">
+                <Grid x:Name="markGrid" Margin="2">
+                  <Ellipse x:Name="optionMark" Fill="{StaticResource RadioButton.Static.Glyph}" MinWidth="6" MinHeight="6" Opacity="0"
+                           VerticalAlignment="Center"/>
+                </Grid>
+              </Border>
+              <ContentPresenter x:Name="contentPresenter" Grid.Column="1" Focusable="False" 
+                                HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                Margin="{TemplateBinding Padding}" RecognizesAccessKey="True" 
+                                SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" 
+                                VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                />
+            </Grid>
+            <ControlTemplate.Triggers>
+              <Trigger Property="HasContent" Value="true">
+                <Setter Property="FocusVisualStyle" Value="{StaticResource OptionMarkFocusVisual}"/>
+                <Setter Property="Padding" Value="2,-1,0,0"/>
+              </Trigger>
+              <Trigger Property="IsMouseOver" Value="true">
+                <Setter Property="Background" TargetName="radioButtonBorder" Value="{StaticResource RadioButton.MouseOver.Background}"/>
+                <Setter Property="BorderBrush" TargetName="radioButtonBorder" Value="{StaticResource RadioButton.MouseOver.Border}"/>
+                <Setter Property="Fill" TargetName="optionMark" Value="{StaticResource RadioButton.MouseOver.Glyph}"/>
+              </Trigger>
+              <Trigger Property="IsEnabled" Value="false">
+                <Setter Property="Background" TargetName="radioButtonBorder" Value="{StaticResource RadioButton.Disabled.Background}"/>
+                <Setter Property="BorderBrush" TargetName="radioButtonBorder" Value="{StaticResource RadioButton.Disabled.Border}"/>
+                <Setter Property="Fill" TargetName="optionMark" Value="{StaticResource RadioButton.Disabled.Glyph}"/>
+                <!--↓追加-->
+                <Setter Property="TextElement.Foreground" TargetName="contentPresenter" Value="{StaticResource RadioButton.Disabled.Border}"/>
+                <!---->
+              </Trigger>
+              <Trigger Property="IsPressed" Value="true">
+                <Setter Property="Background" TargetName="radioButtonBorder" Value="{StaticResource RadioButton.Pressed.Background}"/>
+                <Setter Property="BorderBrush" TargetName="radioButtonBorder" Value="{StaticResource RadioButton.Pressed.Border}"/>
+                <Setter Property="Fill" TargetName="optionMark" Value="{StaticResource RadioButton.Pressed.Glyph}"/>
+              </Trigger>
+              <Trigger Property="IsChecked" Value="true">
+                <Setter Property="Opacity" TargetName="optionMark" Value="1"/>
+              </Trigger>
+              <Trigger Property="IsChecked" Value="{x:Null}">
+                <Setter Property="Opacity" TargetName="optionMark" Value="0.56"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
   </Window.Resources>
 
   <Window.CommandBindings>
@@ -120,45 +216,45 @@
   <!--.NET TIPS：WPF／UWP：コントロールのエッジをシャープに描画するには？［XAML］ - ＠IT
 http://www.atmarkit.co.jp/ait/articles/1602/17/news034.html-->
 
-  <Grid>
-    <!--UseLayoutRounding="True"をつけると中の要素の座標に小数点が付いた時に整数に丸めるからぼやけることがなくなるけど指定した位置から外れることになる-->
-    <Grid.ColumnDefinitions>
-      <ColumnDefinition x:Name="gridColumn0" Width="260"/>
-      <ColumnDefinition/>
-    </Grid.ColumnDefinitions>
-    <Grid.RowDefinitions>
-      <RowDefinition Height="auto"/>
-      <RowDefinition/>
-      <RowDefinition Height="auto"/>
-    </Grid.RowDefinitions>
+                <Grid>
+                  <!--UseLayoutRounding="True"をつけると中の要素の座標に小数点が付いた時に整数に丸めるからぼやけることがなくなるけど指定した位置から外れることになる-->
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition x:Name="gridColumn0" Width="260"/>
+                    <ColumnDefinition/>
+                  </Grid.ColumnDefinitions>
+                  <Grid.RowDefinitions>
+                    <RowDefinition Height="auto"/>
+                    <RowDefinition/>
+                    <RowDefinition Height="auto"/>
+                  </Grid.RowDefinitions>
 
-    <StackPanel Grid.ColumnSpan="2">
-      <Menu Grid.ColumnSpan="2" VerticalAlignment="Top">
-        <MenuItem Header="ファイル(_F)">
-          <!--<MenuItem Command="New"/>-->
-          <!--<MenuItem Command="SaveAs"/>-->
-          <MenuItem Header="クリップボードから画像追加" Click="AddFromClipboard"/>
-          <MenuItem Header="名前を付けて保存(全体)(_S)" Click="SaveAllImage"/>
-        </MenuItem>
-        <MenuItem Header="編集(_E)">
-          <MenuItem Header="元の画像に戻す" Click="ResetExThumb"/>
-          <Separator/>
-          <MenuItem Header="選択画像を削除" Click="RemoveExThumb" InputGestureText="F4"/>
-          <MenuItem Command="Cut"/>
-          <MenuItem Command="Copy"/>
-          <MenuItem Command="Undo"/>
-        </MenuItem>
-        <MenuItem Header="移動(_M)">
-          <MenuItem Header="上層へ(_U)" Command="MoveUp" InputGestureText="PageUp"/>
-          <MenuItem Header="下層へ(_D)" Command="MoveDown" InputGestureText="PageDown"/>
-        </MenuItem>
-        <MenuItem Header="表示(_V)">
-          <MenuItem x:Name="miViewThree" Header="レイアウト3ペイン" Click="LeyoutDisplayThree" IsChecked="{Binding ElementName=rbLayout3, Path=IsChecked,Mode=TwoWay}" IsCheckable="True"/>
-          <MenuItem x:Name="miViewTwo" Header="レイアウト2ペイン" Click="LeyoutDisplayTwo" IsChecked="{Binding ElementName=rbLayout2, Path=IsChecked,Mode=TwoWay}" IsCheckable="True"/>
-          <MenuItem x:Name="miViewOne" Header="レイアウト1ペイン" Click="LeyoutDisplayOne" IsChecked="{Binding ElementName=rbLayout1, Path=IsChecked, Mode=TwoWay}" IsCheckable="True"/>
-        </MenuItem>
-      </Menu>
-      <!--<ToolBarTray >
+                  <StackPanel Grid.ColumnSpan="2">
+                    <Menu Grid.ColumnSpan="2" VerticalAlignment="Top">
+                      <MenuItem Header="ファイル(_F)">
+                        <!--<MenuItem Command="New"/>-->
+                        <!--<MenuItem Command="SaveAs"/>-->
+                        <MenuItem Header="クリップボードから画像追加" Click="AddFromClipboard"/>
+                        <MenuItem Header="名前を付けて保存(全体)(_S)" Click="SaveAllImage"/>
+                      </MenuItem>
+                      <MenuItem Header="編集(_E)">
+                        <MenuItem Header="元の画像に戻す" Click="ResetExThumb"/>
+                        <Separator/>
+                        <MenuItem Header="選択画像を削除" Click="RemoveExThumb" InputGestureText="F4"/>
+                        <MenuItem Command="Cut"/>
+                        <MenuItem Command="Copy"/>
+                        <MenuItem Command="Undo"/>
+                      </MenuItem>
+                      <MenuItem Header="移動(_M)">
+                        <MenuItem Header="上層へ(_U)" Command="MoveUp" InputGestureText="PageUp"/>
+                        <MenuItem Header="下層へ(_D)" Command="MoveDown" InputGestureText="PageDown"/>
+                      </MenuItem>
+                      <MenuItem Header="表示(_V)">
+                        <MenuItem x:Name="miViewThree" Header="レイアウト3ペイン" Click="LeyoutDisplayThree" IsChecked="{Binding IsChecked, ElementName=rbLayout3, Mode=TwoWay}" IsCheckable="True"/>
+                        <MenuItem x:Name="miViewTwo" Header="レイアウト2ペイン" Click="LeyoutDisplayTwo" IsChecked="{Binding IsChecked, ElementName=rbLayout2, Mode=TwoWay}" IsCheckable="True"/>
+                        <MenuItem x:Name="miViewOne" Header="レイアウト1ペイン" Click="LeyoutDisplayOne" IsChecked="{Binding IsChecked, ElementName=rbLayout1, Mode=TwoWay}" IsCheckable="True"/>
+                      </MenuItem>
+                    </Menu>
+                    <!--<ToolBarTray >
         <ToolBar>
           <Button Content="ツールバー"/>
           <ComboBox Width="100">
@@ -169,84 +265,85 @@ http://www.atmarkit.co.jp/ait/articles/1602/17/news034.html-->
           </Menu>
         </ToolBar>
       </ToolBarTray>-->
-    </StackPanel>
+                  </StackPanel>
 
-    <StatusBar Grid.ColumnSpan="2" Grid.Row="2" VerticalAlignment="Bottom">
-      <StatusBarItem x:Name="stSaveSize" Content="保存画像サイズ = "/>
-      <StatusBarItem x:Name="stZIndex" Content="ZIndex = "/>
-      <StatusBarItem x:Name="stLocate" Content="Locate = "/>
-      <StatusBarItem x:Name="stImaSize" Content="Size = "/>
-      <StatusBarItem x:Name="stMotoSize" Content="Size = "/>
-    </StatusBar>
+                  <StatusBar Grid.ColumnSpan="2" Grid.Row="2" VerticalAlignment="Bottom">
+                    <StatusBarItem x:Name="stSaveSize" Content="保存画像サイズ = "/>
+                    <StatusBarItem x:Name="stZIndex" Content="ZIndex = "/>
+                    <StatusBarItem x:Name="stLocate" Content="Locate = "/>
+                    <StatusBarItem x:Name="stImaSize" Content="Size = "/>
+                    <StatusBarItem x:Name="stMotoSize" Content="Size = "/>
+                  </StatusBar>
 
 
-    <DockPanel x:Name="dockP" Grid.Row="1">
-      <Grid Name="grid2" Height="200" DockPanel.Dock="Top">
-        <Grid.ColumnDefinitions>
-          <ColumnDefinition Width="*"/>
-          <ColumnDefinition Width="70"/>
-        </Grid.ColumnDefinitions>
+                  <DockPanel x:Name="dockP" Grid.Row="1">
+                    <Grid x:Name="grid2" Height="200" DockPanel.Dock="Top">
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="70"/>
+                      </Grid.ColumnDefinitions>
 
-        <Grid Width="104" Height="84" HorizontalAlignment="Left" VerticalAlignment="Bottom">
-          <Rectangle x:Name="raMihonLower" Fill="White"/>
-          <Border BorderBrush="Gray" BorderThickness="1" Margin="1"/>
-          <local:HighQualiyImage x:Name="mihonLower" Margin="2"/>
-        </Grid>
+                      <Grid Width="104" Height="84" HorizontalAlignment="Left" VerticalAlignment="Bottom">
+                        <Rectangle x:Name="raMihonLower" Fill="{Binding ElementName=canvas1,Path=Background}" Stroke="LightGray" />
+                        <!--<Border BorderBrush="Gray" BorderThickness="1" Margin="1"/>-->
+                        <local:HighQualiyImage x:Name="mihonLower" Margin="2"/>
+                      </Grid>
 
-        <Grid Width="104" Height="84" HorizontalAlignment="Right">
-          <Rectangle x:Name="raMihon" Fill="White" />
-          <Border  BorderBrush="Gray" BorderThickness="1" Margin="1"/>
-          <local:HighQualiyImage x:Name="mihon" Margin="2" Focusable="True"/>
-        </Grid>
-        <TextBlock Text="選択画像" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,140,10,0"/>
+                      <Grid Width="104" Height="84" HorizontalAlignment="Right">
+                        <Rectangle x:Name="raMihon" Fill="{Binding ElementName=canvas1,Path=Background}" Stroke="LightGray" />
+                        <!--<Border  BorderBrush="Gray" BorderThickness="1" Margin="1"/>-->
+                        <local:HighQualiyImage x:Name="mihon" Margin="2" Focusable="True"/>
+                      </Grid>
+                      <TextBlock Text="選択画像" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,140,10,0"/>
 
-        <Grid Width="104" Height="84" HorizontalAlignment="Left" VerticalAlignment="Top">
-          <Rectangle x:Name="raMihonUpper" Fill="White" />
-          <Border BorderBrush="Gray" BorderThickness="1" Margin="1"/>
-          <local:HighQualiyImage x:Name="mihonUpper" Margin="2"/>
-        </Grid>
+                      <Grid Width="104" Height="84" HorizontalAlignment="Left" VerticalAlignment="Top">
+                        <Rectangle x:Name="raMihonUpper" Fill="{Binding ElementName=canvas1,Path=Background}" Stroke="LightGray" />
+                        <!--<Border BorderBrush="Gray" BorderThickness="1" Margin="1"/>-->
+                        <local:HighQualiyImage x:Name="mihonUpper" Margin="2"/>
+                      </Grid>
 
-        <StackPanel Grid.Column="1" Width="70" HorizontalAlignment="Right">
-          <Button x:Name="btAge" Content="上層へ" Background="Salmon" Foreground="White" Margin="1" Style="{StaticResource btstyle}"/>
-          <Button x:Name="btSage" Content="下層へ" Background="Salmon" Foreground="White" Margin="1"/>
-          <Button x:Name="btSaveAll" Content="保存" Background="BlueViolet" Foreground="White" Margin="1"/>
-          <Button x:Name="btReset" Content="元に戻す" Margin="1" Style="{StaticResource btstyle}"/>
-          <Button x:Name="btClipboard" Content="クリップボード" Margin="1" Style="{StaticResource btstyle}"/>
-          <Border  Height="10"/>
-          <Button x:Name="btRemove" Content="消去" Background="Gray" Foreground="White" Margin="1"/>
-          <Button x:Name="btRemoveAll" Content="全消去" Background="Gray" Foreground="White" Margin="1"/>
-          <Button Content="test"/>
-        </StackPanel>
-      </Grid>
-      <!--<ScrollViewer VerticalScrollBarVisibility="Auto">-->
-      <TabControl x:Name="tabControl1">
-        <TabItem Header="基本設定" Padding="12,2">
-          <ScrollViewer VerticalScrollBarVisibility="Auto">
-            <StackPanel>
-              <GroupBox Header="画像を追加する時の設定" Background="LightCyan">
-                <StackPanel>
-                  <!--<TextBlock Text="画像を追加する時の設定" HorizontalAlignment="Center"/>-->
-                  <GroupBox Header="基準にする階層">
-                    <StackPanel Orientation="Horizontal">
-                      <RadioButton x:Name="rbAddUpper" Content="上層" Margin="10,0,0,0" IsChecked="True" Style="{StaticResource radioButtonStyle1}"/>
-                      <RadioButton x:Name="rbAddLower" Content="下層" Style="{StaticResource radioButtonStyle1}" Margin="10,0,0,0"/>
-                      <CheckBox x:Name="cbFocusImage" Content="選択画像" Margin="10,0"/>
-                    </StackPanel>
-                  </GroupBox>
-                  <GroupBox Header="基準にする位置">
-                    <WrapPanel Orientation="Horizontal">
-                      <RadioButton x:Name="rbSetLocateFocusImage" Content="選択画像" Margin="0,0,10,0" IsChecked="True" Template="{StaticResource test}"/>
-                      <RadioButton x:Name="rbSetLocateAllImage" Content="全体画像の左下" Template="{StaticResource test}"/>
-                      <RadioButton x:Name="rbSetLocateDrop" Content="ドロップした場所" Template="{StaticResource test}"/>
-                    </WrapPanel>
-                  </GroupBox>
-                  <GroupBox Header="ファイル名での追加順番">
-                    <StackPanel Orientation="Horizontal">
-                      <RadioButton x:Name="rbtAscent" Content="昇順" Margin="10,0,0,0" IsChecked="True" Style="{StaticResource radioButtonStyle1}"/>
-                      <RadioButton x:Name="rbtDescent" Content="降順"  Margin="10,0,0,0" Style="{StaticResource radioButtonStyle1}"/>
-                    </StackPanel>
-                  </GroupBox>
-                  <!--<GroupBox Header="選択画像に">
+                      <StackPanel Grid.Column="1" Width="70" HorizontalAlignment="Right">
+                        <Button x:Name="btAge" Content="上層へ" Background="Salmon" Foreground="White" Margin="1" Style="{StaticResource btstyle}"/>
+                        <Button x:Name="btSage" Content="下層へ" Background="Salmon" Foreground="White" Margin="1"/>
+                        <Button x:Name="btSaveAll" Content="保存" Background="BlueViolet" Foreground="White" Margin="1"/>
+                        <Button x:Name="btReset" Content="元に戻す" Margin="1" Style="{StaticResource btstyle}"/>
+                        <Button x:Name="btClipboard" Content="クリップボード" Margin="1" Style="{StaticResource btstyle}"/>
+                        <Border  Height="10"/>
+                        <Button x:Name="btRemove" Content="消去" Background="Gray" Foreground="White" Margin="1"/>
+                        <Button x:Name="btRemoveAll" Content="全消去" Background="Gray" Foreground="White" Margin="1"/>
+                        <Button Content="test" Click="Button_Click_1" IsEnabled="True"/>
+                      </StackPanel>
+                    </Grid>
+                    <!--</ScrollViewer>-->
+                    <!--<ScrollViewer VerticalScrollBarVisibility="Auto">-->
+                    <TabControl x:Name="tabControl1">
+                      <TabItem Header="基本設定" Padding="12,2">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                          <StackPanel>
+                            <GroupBox Header="画像を追加する時の設定" Background="LightCyan">
+                              <StackPanel>
+                                <!--<TextBlock Text="画像を追加する時の設定" HorizontalAlignment="Center"/>-->
+                                <GroupBox Header="基準にする階層">
+                                  <StackPanel Orientation="Horizontal">
+                                    <RadioButton x:Name="rbAddUpper" Content="上層" Margin="10,0,0,0" IsChecked="True" Style="{StaticResource radioButtonStyle1}"/>
+                                    <RadioButton x:Name="rbAddLower" Content="下層" Style="{StaticResource radioButtonStyle1}" Margin="10,0,0,0"/>
+                                    <CheckBox x:Name="cbFocusImage" Content="選択画像" Margin="10,0"/>
+                                  </StackPanel>
+                                </GroupBox>
+                                <GroupBox Header="基準にする位置">
+                                  <WrapPanel Orientation="Horizontal">
+                                    <RadioButton x:Name="rbSetLocateFocusImage" Content="選択画像" Margin="0,0,10,0" IsChecked="True" Template="{StaticResource test}"/>
+                                    <RadioButton x:Name="rbSetLocateAllImage" Content="全体画像の左下" Template="{StaticResource test}"/>
+                                    <RadioButton x:Name="rbSetLocateDrop" Content="ドロップした場所" Template="{StaticResource test}"/>
+                                  </WrapPanel>
+                                </GroupBox>
+                                <GroupBox Header="ファイル名での追加順番">
+                                  <StackPanel Orientation="Horizontal">
+                                    <RadioButton x:Name="rbtAscent" Content="昇順" Margin="10,0,0,0" IsChecked="True" Style="{StaticResource radioButtonStyle1}"/>
+                                    <RadioButton x:Name="rbtDescent" Content="降順"  Margin="10,0,0,0" Style="{StaticResource radioButtonStyle1}"/>
+                                  </StackPanel>
+                                </GroupBox>
+                                <!--<GroupBox Header="選択画像に">
                     <StackPanel Orientation="Horizontal">
                       <RadioButton x:Name="rbOverlap" Content="重ねる" Padding="0,0,10,0" IsChecked="True"/>
                       <RadioButton x:Name="rbNotOverlap" Content="重ねない"/>
@@ -254,141 +351,212 @@ http://www.atmarkit.co.jp/ait/articles/1602/17/news034.html-->
                   </GroupBox>-->
 
 
-                  <GroupBox Header="まとめて追加する時のスライド量">
-                    <StackPanel>
-                      <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="左" Margin="5,0,5,0" VerticalAlignment="Center"/>
-                        <Slider x:Name="sliX" Minimum="-10" Maximum="10" Value="-1" Width="100" SmallChange="1" IsSnapToTickEnabled="True"/>
-                        <TextBlock Text="右" Margin="5,0,0,0" VerticalAlignment="Center"/>
-                        <TextBlock x:Name="tbSliX" Margin="5,0" Text="000" VerticalAlignment="Center"/>
-                      </StackPanel>
-                      <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="上" Margin="5,0,5,0" VerticalAlignment="Center"/>
-                        <Slider x:Name="sliY" Minimum="-10" Maximum="10" Value="4" Width="100" SmallChange="1" IsSnapToTickEnabled="True"/>
-                        <TextBlock Text="下" Margin="5,0,0,0" VerticalAlignment="Center"/>
-                        <TextBlock x:Name="tbSliY" Margin="5,0" Text="000" VerticalAlignment="Center"/>
-                      </StackPanel>
-                    </StackPanel>
-                  </GroupBox>
+                                <GroupBox Header="まとめて追加する時のスライド量">
+                                  <StackPanel>
+                                    <StackPanel Orientation="Horizontal" Margin="0,2" HorizontalAlignment="Center">
+                                      <TextBlock Text="左" Margin="5,0,5,0" VerticalAlignment="Center"/>
+                                      <Slider x:Name="sliX" Minimum="-10" Maximum="10" Value="4" Width="100" SmallChange="1" IsSnapToTickEnabled="True"/>
+                                      <TextBlock Text="右" Margin="5,0,0,0" VerticalAlignment="Center"/>
+                                      <TextBlock x:Name="tbSliX" Margin="5,0" Text="000" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                      <TextBlock Text="上" Margin="5,0,5,0" VerticalAlignment="Center"/>
+                                      <Slider x:Name="sliY" Minimum="-10" Maximum="10" Value="4" Width="100" SmallChange="1" IsSnapToTickEnabled="True"/>
+                                      <TextBlock Text="下" Margin="5,0,0,0" VerticalAlignment="Center"/>
+                                      <TextBlock x:Name="tbSliY" Margin="5,0" Text="000" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                  </StackPanel>
+                                </GroupBox>
 
-                </StackPanel>
-              </GroupBox>
-              <GroupBox Header="グリッドサイズ" Margin="0,10" Background="LemonChiffon">
-                <StackPanel Orientation="Horizontal">
-                  <Slider x:Name="gridSdr" Value="8" Minimum="1" Maximum="64" Width="128" 
-                          SmallChange="1" IsSnapToTickEnabled="True" IsManipulationEnabled="True" />
-                  <TextBlock x:Name="masuTbk" Text="{Binding ElementName=gridSdr, Path=Value, StringFormat=00}" HorizontalAlignment="Center"/>
-                </StackPanel>
-              </GroupBox>
-              <GroupBox Header="レイアウト">
-                <StackPanel Orientation="Horizontal">
-                  <RadioButton x:Name="rbLayout3" Content="3ペイン(標準)" Margin="5,0" IsChecked="True" Template="{StaticResource test}"/>
-                  <RadioButton x:Name="rbLayout2" Content="2ペイン" Margin="5,0" Template="{StaticResource test}"/>
-                  <RadioButton x:Name="rbLayout1" Content="1ペイン" Margin="5,0" Template="{StaticResource test}"/>
-                </StackPanel>
-              </GroupBox>
-              <!--<Button x:Name="age" Content="test" Background="AliceBlue" />
-              <Button x:Name="sage" Content="sage" Background="Aqua" IsEnabled="False"/>
-              <Button x:Name="save" Content="保存"  Background="BlueViolet" IsEnabled="False"/>
-              <Button x:Name="kaiten" Content="kaiten" Background="Khaki" IsEnabled="False"/>
-              <Button x:Name="remove" Content="削除" Background="Salmon" IsEnabled="False"/>-->
-            </StackPanel>
-          </ScrollViewer>
-        </TabItem>
-        <TabItem x:Name="tabItemTransform" Header="変形" IsEnabled="True">
-          <ScrollViewer VerticalScrollBarVisibility="Auto">
-            <StackPanel>
-              <!--<Button x:Name="btGetTransform" Content="Get" Background="Khaki"/>-->
-              <!--<Button x:Name="btSetTransform" Content="Set" />-->
+                              </StackPanel>
+                            </GroupBox>
+                            <GroupBox Header="グリッドサイズ" Margin="0,10" Background="LemonChiffon">
+                              <StackPanel Orientation="Horizontal">
+                                <Slider x:Name="gridSdr" Value="8" Minimum="1" Maximum="64" Width="128" 
+										SmallChange="1" IsSnapToTickEnabled="True" IsManipulationEnabled="True" />
+                                <TextBlock x:Name="masuTbk" Text="{Binding Value, ElementName=gridSdr, StringFormat=00}" HorizontalAlignment="Center"/>
+                              </StackPanel>
+                            </GroupBox>
+                            <GroupBox Header="レイアウト">
+                              <StackPanel Orientation="Horizontal">
+                                <RadioButton x:Name="rbLayout3" Content="3ペイン(標準)" Margin="5,0" IsChecked="True" Template="{StaticResource test}"/>
+                                <RadioButton x:Name="rbLayout2" Content="2ペイン" Margin="5,0" Template="{StaticResource test}"/>
+                                <RadioButton x:Name="rbLayout1" Content="1ペイン" Margin="5,0" Template="{StaticResource test}"/>
+                              </StackPanel>
+                            </GroupBox>
+                            <GroupBox Header="保存">
+                              <StackPanel>
+                                <CheckBox Content="背景色を保存する" IsChecked="False"/>
+                                <DockPanel>
+                                  <TextBlock Text="背景色" VerticalAlignment="Center" Margin="10,0,5,0"/>
+                                  
+                                  <ComboBox Name="cmbBackColor" Background="{x:Null}" >
+                                    <ComboBox.ItemTemplate>
+                                      <DataTemplate>
+                                        <StackPanel Orientation="Horizontal">
+                                          <Rectangle Fill="{Binding Name}" Width="24" Height="16" Margin="0,2,5,2"/>
+                                          <TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                      </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                  </ComboBox>
+                                </DockPanel>
+                              </StackPanel>
+                            </GroupBox>
+                           
+                          </StackPanel>
+                        </ScrollViewer>
+                      </TabItem>
+                      <TabItem x:Name="tabItemTransform" Header="変形">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" >
+                          <StackPanel>
+                            <!--<Button x:Name="btGetTransform" Content="Get" Background="Khaki"/>-->
+                            <!--<Button x:Name="btSetTransform" Content="Set" />-->
+                            <GroupBox Header="描画モード" Background="MintCream">
+                              <WrapPanel>
+                                <RadioButton x:Name="rbScaleHigh" Content="綺麗" Margin="5,0" IsChecked="True" Style="{StaticResource radioButtonStyle1}"/>
+                                <RadioButton x:Name="rbScaleNormal" Content="普通" Margin="5,0" Style="{StaticResource radioButtonStyle1}"/>
+                                <RadioButton x:Name="rbScaleNearest" Content="特殊" Margin="5,0" Style="{StaticResource radioButtonStyle1}"/>
+                              </WrapPanel>
+                            </GroupBox>
 
-              <GroupBox Header="回転">
-                <StackPanel>
-                  <DockPanel Margin="0,1">
-                    <TextBlock Text="角度" VerticalAlignment="Center" Margin="10,0"/>
-                    <Slider x:Name="sldKaiten" Minimum="0" Maximum="360"/>
-                  </DockPanel>
-                  <WrapPanel>
-                    <TextBox x:Name="tbKaiten" Text="{Binding ElementName=sldKaiten, Path=Value,StringFormat=000.00}"/>
-                    <Button x:Name="btAngle0" Content="上" Tag="0" Margin="1,0,0,0" Style="{StaticResource btstyle}"/>
-                    <Button x:Name="btAngle90" Content="右" Tag="90" Margin="1,0,0,0" Style="{StaticResource btstyle}"/>
-                    <Button x:Name="btAngle180" Content="下" Tag="180" Margin="1,0,0,0" Style="{StaticResource btstyle}"/>
-                    <Button x:Name="btAngle270" Content="左" Tag="270" Margin="1,0,0,0" Style="{StaticResource btstyle}"/>
-                    <Button x:Name="btAngleAdd5" Content="+5" Tag="5" Margin="1,0,0,0" Style="{StaticResource btstyle}"/>
-                    <Button x:Name="btAngleSub5" Content="-5" Tag="-5" Margin="1,0,0,0" Style="{StaticResource btstyle}"/>
-                    <!--<Button x:Name="btAngleAdd10" Content="+10" Tag="+10" Margin="1,0,0,0" Style="{StaticResource btstyle}"/>-->
-                    <Button x:Name="btAngleAdd45" Content="+45" Tag="45" Margin="1,0,0,0" Style="{StaticResource btstyle}"/>
-                  </WrapPanel>
-                </StackPanel>
-              </GroupBox>
+                            <GroupBox Header="回転" Background="MintCream">
+                              <StackPanel>
+                                <DockPanel Margin="0,1">
+                                  <TextBlock Text="角度" VerticalAlignment="Center" Margin="10,0"/>
+                                  <Slider x:Name="sldKaiten" Minimum="0" Maximum="360"/>
+                                </DockPanel>
+                                <WrapPanel>
+                                  <TextBox x:Name="tbKaiten" Text="{Binding Value, ElementName=sldKaiten, StringFormat=000.00}"/>
+                                  <Button x:Name="btAngle0" Content="上" Tag="0" Margin="1,0,0,0" Style="{StaticResource btstyle}"/>
+                                  <Button x:Name="btAngle90" Content="右" Tag="90" Margin="1,0,0,0" Style="{StaticResource btstyle}"/>
+                                  <Button x:Name="btAngle180" Content="下" Tag="180" Margin="1,0,0,0" Style="{StaticResource btstyle}"/>
+                                  <Button x:Name="btAngle270" Content="左" Tag="270" Margin="1,0,0,0" Style="{StaticResource btstyle}"/>
+                                  <Button x:Name="btAngleAdd5" Content="+5" Tag="5" Margin="1,0,0,0" Style="{StaticResource btstyle}"/>
+                                  <Button x:Name="btAngleSub5" Content="-5" Tag="-5" Margin="1,0,0,0" Style="{StaticResource btstyle}"/>
+                                  <!--<Button x:Name="btAngleAdd10" Content="+10" Tag="+10" Margin="1,0,0,0" Style="{StaticResource btstyle}"/>-->
+                                  <Button x:Name="btAngleAdd45" Content="+45" Tag="45" Margin="1,0,0,0" Style="{StaticResource btstyle}"/>
+                                </WrapPanel>
+                              </StackPanel>
+                            </GroupBox>
 
-              <GroupBox Header="拡大縮小">
-                <StackPanel>
-                  <GroupBox Header="描画モード">
-                    <WrapPanel>
-                      <RadioButton x:Name="rbScaleHigh" Content="綺麗" Margin="5,0" IsChecked="True" Style="{StaticResource radioButtonStyle1}"/>
-                      <RadioButton x:Name="rbScaleNormal" Content="普通" Margin="5,0" Style="{StaticResource radioButtonStyle1}"/>
-                      <RadioButton x:Name="rbScaleNearest" Content="特殊" Margin="5,0" Style="{StaticResource radioButtonStyle1}"/>
-                    </WrapPanel>
-                  </GroupBox>
-                  <DockPanel Margin="0,2">
-                    <TextBlock Text="拡大率" VerticalAlignment="Center" Margin="10,0"/>
-                    <Slider x:Name="sldScale" Minimum="-3" Maximum="3" Value="1" LargeChange="0.1" TickFrequency="0.01" SmallChange="0.01" IsSnapToTickEnabled="True"/>
-                  </DockPanel>
-                  <WrapPanel>
-                    <TextBox Text="{Binding ElementName=sldScale, Path=Value, StringFormat=#0.000}" MouseWheel="TextBox_MouseWheel"/>
-                    <Button x:Name="btSclae1" Content="x1" Tag="1" Margin="1,0,0,0" Style="{StaticResource btstyle}"/>
-                    <Button x:Name="btSclae2" Content="x2" Tag="2" Margin="1,0,0,0" Style="{StaticResource btstyle}"/>
-                    <Button x:Name="btSclae3" Content="x3" Tag="3" Margin="1,0,0,0" Style="{StaticResource btstyle}"/>
-                    <Button x:Name="btSclae2Divde" Content="x0.5" Tag="0.5" Margin="4,0,0,0" Style="{StaticResource btstyle}"/>
-                    <!--<Button x:Name="btSclae2Now" Content="今x2" Tag="2" Margin="4,0"/>
+                            <GroupBox Header="拡大縮小" Background="MintCream">
+                              <StackPanel>
+
+
+                                <CheckBox x:Name="cbTateyokoSync" Content="縦横同期" IsChecked="True" Margin="10,10,0,0"/>
+                                <GroupBox Header="比率で指定" Background="Honeydew">
+                                  <StackPanel>
+                                    <WrapPanel Margin="0,2">
+                                      <TextBlock Text="拡大率横" VerticalAlignment="Center" Margin="0,0"/>
+                                      <Button x:Name="btSclae1" Content="x1" Tag="1" Margin="1,0,0,0" Style="{StaticResource btstyle}"/>
+                                      <Button x:Name="btSclae2" Content="x2" Tag="2" Margin="1,0,0,0" Style="{StaticResource btstyle}"/>
+                                      <Button x:Name="btSclae3" Content="x3" Tag="3" Margin="1,0,0,0" Style="{StaticResource btstyle}"/>
+                                      <Button x:Name="btSclae2Divde" Content="1/2" Tag="0.5" Margin="1,0,0,0" Style="{StaticResource btstyle}"/>
+                                      <!--<Button x:Name="btSclae2Now" Content="今x2" Tag="2" Margin="4,0"/>
                     <Button x:Name="btScla2DivdeNow" Content="今/2" Tag="0.5"/>-->
-                  </WrapPanel>
-                </StackPanel>
-              </GroupBox>
-              <!--<Button x:Name="testbutton" Content="testbutton"/>-->
-            </StackPanel>
+                                    </WrapPanel>
+                                    <DockPanel>
+                                      <TextBox Text="{Binding Value, ElementName=sldScaleX, StringFormat=#0.000}" MouseWheel="TextBox_MouseWheel"
+                             Tag="{Binding ElementName=sldScaleX}"/>
+                                      <Slider x:Name="sldScaleX" Minimum="-3" Maximum="3" Value="1" LargeChange="0.1" TickFrequency="0.01" SmallChange="0.01" IsSnapToTickEnabled="True"/>
+                                    </DockPanel>
+                                    <WrapPanel Margin="0,2">
+                                      <TextBlock Text="拡大率縦" VerticalAlignment="Center" Margin="0,0"/>
+                                      <Button x:Name="btSclaeY1" Content="x1" Tag="1" Margin="1,0,0,0" Style="{StaticResource btstyle}"/>
+                                      <Button x:Name="btSclaeY2" Content="x2" Tag="2" Margin="1,0,0,0" Style="{StaticResource btstyle}"/>
+                                      <Button x:Name="btSclaeY3" Content="x3" Tag="3" Margin="1,0,0,0" Style="{StaticResource btstyle}"/>
+                                      <Button x:Name="btSclaeY2Divde" Content="1/2" Tag="0.5" Margin="1,0,0,0" Style="{StaticResource btstyle}"/>
+                                    </WrapPanel>
+                                    <DockPanel>
+                                      <TextBox Text="{Binding Value, ElementName=sldScaleY, StringFormat=#0.000}"
+											MouseWheel="TextBox_MouseWheel" Tag="{Binding ElementName=sldScaleY}"/>
+                                      <Slider x:Name="sldScaleY" Minimum="-3" Maximum="3" Value="1" LargeChange="0.1" TickFrequency="0.01" SmallChange="0.01" IsSnapToTickEnabled="True"/>
 
-          </ScrollViewer>
-        </TabItem>
-        <TabItem x:Name="tabItemTransparent" Header="透明" >
-          <ScrollViewer VerticalScrollBarVisibility="Auto">
-            <StackPanel>
-              <Grid x:Name="gridGettingColor" Background="White" Visibility="Collapsed">
-                <Rectangle x:Name="rectGetingColor" Height="20" Margin="2" />
-                <TextBlock x:Name="tbGetingColr" Text="取得中カーソル下のARGB"/>
-              </Grid>
+                                    </DockPanel>
+                                  </StackPanel>
+                                </GroupBox>
+                                <GroupBox Header="ピクセル数で指定" Background="Honeydew">
+                                  <StackPanel>
+                                    <StackPanel Orientation="Horizontal">
+                                      <RadioButton x:Name="rbPriorityWidth" Content="横幅優先" Style="{StaticResource RadioButtonStyle1}" IsChecked="True"
+                                     IsEnabled="{Binding ElementName=cbTateyokoSync, Path=IsChecked}"/>
+                                      <RadioButton x:Name="rbPriorityHeight" Content="高さ優先" Margin="10,0" Style="{StaticResource RadioButtonStyle1}"
+                                     IsEnabled="{Binding ElementName=cbTateyokoSync, Path=IsChecked}"/>
+                                    </StackPanel>
+                                    <WrapPanel Margin="0,4">
+                                      <TextBlock Text="幅" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                                      <local:NumericUpDown x:Name="numeWidth" Width="60" Maximum="10000" Minimum="-10000" Value="100"/>
+                                      <TextBlock Text="高" Margin="8,0,4,0" VerticalAlignment="Center"/>
+                                      <local:NumericUpDown x:Name="numeHeight" Width="60" Maximum="10000" Minimum="-10000" Value="100"/>
+                                      <Button x:Name="btSetScale" Content="Set" Margin="10,0"/>
+                                      <Button x:Name="btGetScale" Content="Get"/>
+                                    </WrapPanel>
+                                  </StackPanel>
+                                </GroupBox>
+                              </StackPanel>
+                            </GroupBox>
 
-              <Grid Background="White">
-                <Rectangle x:Name="rectSelectColor" Height="20" Margin="2" />
-              </Grid>
-              <TextBlock x:Name="tbSelectColorARGB" Text="argb"/>
-              <Button x:Name="btGetColor" Content="色取得" Margin="1" Style="{StaticResource btstyle}"/>
-              <Button x:Name="btSetTransparent" Content="選択色を透明にする" Margin="1" Style="{StaticResource btstyle}"/>
-              <!--<Button x:Name="btKaiten45" Content="45度回転"/>
+                            <GroupBox Header="傾斜" Background="MintCream">
+                              <StackPanel>
+                                <DockPanel>
+                                  <local:NumericUpDown x:Name="numeSkewY" Value="{Binding Value, ElementName=sldSkewY, Mode=TwoWay}"
+                                         					Frequency="0.1" Width="60" Digits="1" Maximum="89" Minimum="-89"/>
+                                  <Slider x:Name="sldSkewY" Minimum="-89" Maximum="89" Value="0" LargeChange="1" TickFrequency="0.1" SmallChange="0.1"
+										IsSnapToTickEnabled="True"/>
+                                </DockPanel>
+                                <DockPanel>
+                                  <local:NumericUpDown x:Name="numeSkewX" Value="{Binding Value, ElementName=sldSkewX, Mode=TwoWay}"
+                                         					Frequency="0.1" Width="60" Digits="1" Maximum="89" Minimum="-89"/>
+                                  <Slider x:Name="sldSkewX" Minimum="-89" Maximum="89" Value="0" LargeChange="1" TickFrequency="1" SmallChange="0.1"
+										IsSnapToTickEnabled="True"/>
+                                </DockPanel>
+                              </StackPanel>
+                            </GroupBox>
+                            <!--<Button x:Name="testbutton" Content="testbutton"/>-->
+                          </StackPanel>
+
+                        </ScrollViewer>
+                      </TabItem>
+                      <TabItem x:Name="tabItemTransparent" Header="透明" >
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                          <StackPanel>
+                            <Grid x:Name="gridGettingColor" Background="White" Visibility="Collapsed">
+                              <Rectangle x:Name="rectGetingColor" Height="20" Margin="2" />
+                              <TextBlock x:Name="tbGetingColr" Text="取得中カーソル下のARGB"/>
+                            </Grid>
+
+                            <Grid Background="White">
+                              <Rectangle x:Name="rectSelectColor" Height="20" Margin="2" Fill="Transparent"/>
+                            </Grid>
+                            <TextBlock x:Name="tbSelectColorARGB" Text="argb"/>
+                            <Button x:Name="btGetColor" Content="画像から色取得" Margin="1" Style="{StaticResource btstyle}"/>
+                            <Button x:Name="btGetTransparentColor" Margin="1" Content="色の選択"/>
+                            <Button x:Name="btSetTransparent" Content="選択色を透明にする" Margin="1" Style="{StaticResource btstyle}"/>
+                            <!--<Button x:Name="btKaiten45" Content="45度回転"/>
               <Slider x:Name="sldKaiten" Minimum="0" Maximum="360" ValueChanged="sldKaiten_ValueChanged"/>
               <TextBox x:Name="tbKaiten" Text="{Binding ElementName=sldKaiten, Path=Value,StringFormat=#0.00}"/>
               <Button x:Name="testbutton" Content="testbutton"/>-->
-            </StackPanel>
-          </ScrollViewer>
-        </TabItem>
-        <TabItem x:Name="tabItemShape" Header="図形">
-          <ScrollViewer VerticalScrollBarVisibility="Auto">
-            <StackPanel>
-              <Button x:Name="btAddRectangle" Content="四角形追加" Margin="1,0,0,0" Style="{StaticResource btstyle}"/>
-              <!--<Button x:Name="btSetTransparent" Content="選択色を透明にする" />-->
-            </StackPanel>
-          </ScrollViewer>
-        </TabItem>
-      </TabControl>
-      <!--</ScrollViewer>-->
-    </DockPanel>
-    <ScrollViewer Grid.Column="1" Grid.Row="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
-      <Canvas x:Name="canvas1" Grid.Column="1" Grid.Row="1" HorizontalAlignment="Left" VerticalAlignment="Top">
-        <!--<Ellipse Fill="Red" Opacity="0.5" Width="100" Height="100" Canvas.Top="50"/>-->
-        <!--<Button Name="button1" Content="表示1" Canvas.Top="15" Canvas.Left="25"/>
+                          </StackPanel>
+                        </ScrollViewer>
+                      </TabItem>
+                      <TabItem x:Name="tabItemShape" Header="図形" IsEnabled="False">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                          <StackPanel>
+                            <Button x:Name="btAddRectangle" Content="四角形追加" Margin="1,0,0,0" Style="{StaticResource btstyle}"/>
+                            <!--<Button x:Name="btSetTransparent" Content="選択色を透明にする" />-->
+                          </StackPanel>
+                        </ScrollViewer>
+                      </TabItem>
+                    </TabControl>
+                  </DockPanel>
+                  <ScrollViewer Grid.Column="1" Grid.Row="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                    <Canvas x:Name="canvas1" Grid.Column="1" Grid.Row="1" HorizontalAlignment="Left" VerticalAlignment="Top" Background="Transparent">
+                      <!--<Ellipse Fill="Red" Opacity="0.5" Width="100" Height="100" Canvas.Top="50"/>-->
+                      <!--<Button Name="button1" Content="表示1" Canvas.Top="15" Canvas.Left="25"/>
             <Button Name="button2" Content="表示2" Canvas.Top="45" Canvas.Left="25"/>-->
-      </Canvas>
-    </ScrollViewer>
+                    </Canvas>
+                  </ScrollViewer>
 
-  </Grid>
+                </Grid>
 </Window>
