@@ -389,7 +389,7 @@ http://www.atmarkit.co.jp/ait/articles/1602/17/news034.html-->
                                 <CheckBox Content="背景色を保存する" IsChecked="False"/>
                                 <DockPanel>
                                   <TextBlock Text="背景色" VerticalAlignment="Center" Margin="10,0,5,0"/>
-                                  
+
                                   <ComboBox Name="cmbBackColor" Background="{x:Null}" >
                                     <ComboBox.ItemTemplate>
                                       <DataTemplate>
@@ -403,7 +403,7 @@ http://www.atmarkit.co.jp/ait/articles/1602/17/news034.html-->
                                 </DockPanel>
                               </StackPanel>
                             </GroupBox>
-                           
+
                           </StackPanel>
                         </ScrollViewer>
                       </TabItem>

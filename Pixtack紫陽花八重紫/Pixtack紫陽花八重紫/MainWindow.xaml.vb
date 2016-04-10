@@ -746,8 +746,8 @@ Class MainWindow
 
         'ウィンドウの位置リセット、ブログ用幅
         'With Settings1.Default.MainWindow_Bounds
-        '    Left = .Left
-        '    Top = .Top
+        '    'Left = .Left
+        '    'Top = .Top
         '    Width = 554 ' .Width
         '    Height = .Height
         'End With
@@ -1264,7 +1264,7 @@ Class MainWindow
         End If
     End Sub
 
-    'マウスの下にある画像から色取得して取得中の色を表示、下に透過されているものは無視される
+    'マウスの下にある画像から色取得して取得中の色を表示
     Public Sub GetColor(x As Integer, y As Integer, bs As BitmapSource)
         'クリックされた位置の1ｘ1の画像を切り取り作成
         Dim cb As New CroppedBitmap(bs, New Int32Rect(x, y, 1, 1))
@@ -1272,11 +1272,11 @@ Class MainWindow
         Dim cfb As New FormatConvertedBitmap(cb, PixelFormats.Bgra32, Nothing, 0)
         Dim pixels(3) As Byte
         cfb.CopyPixels(pixels, 4, 0) 'strideは4で決め打ち
-        Dim a As Integer = pixels(3)
-        Dim b As Integer = pixels(2)
+        Dim b As Integer = pixels(0)
         Dim g As Integer = pixels(1)
-        Dim r As Integer = pixels(0)
-        Dim c As Color = Color.FromArgb(a, b, g, r)
+        Dim r As Integer = pixels(2)
+        Dim a As Integer = pixels(3)
+        Dim c As Color = Color.FromArgb(a, r, g, b)
         '取得した色でブラシ作成して表示
         Dim scb As New SolidColorBrush(c)
         rectGetingColor.Fill = scb

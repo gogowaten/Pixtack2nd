@@ -518,6 +518,11 @@ Class ColorPalette
         End With
     End Sub
 
+
+
+
+    'OKボタンとキャンセルボタン
+
     'WPFサンプル:ShowメソッドとShowDaialogメソッド:Gushwell's C# Dev Notes
     'http://gushwell.ldblog.jp/archives/52285322.html
 
