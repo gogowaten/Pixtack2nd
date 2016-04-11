@@ -491,6 +491,12 @@ Class MainWindow
                                                                   End Sub)
     End Sub
 
+    'Canvasの再描画
+    Public Sub ReRenderCanvas()
+        canvas1.Dispatcher.Invoke(Threading.DispatcherPriority.Render, Sub()
+
+                                                                       End Sub)
+    End Sub
 
 
     '画像ファイルとして保存
@@ -512,13 +518,22 @@ Class MainWindow
             .AddExtension = True
         End With
 
-        'ダイアログ表示
+        'ファイル保存ダイアログ表示
         If dialogSave.ShowDialog Then
             '塗る範囲のRect取得、回転や変形させた画像があると小数点以下がつく
             Dim originRect As Rect = GetUnion()
 
             '保存画像サイズに小数点は存在しないので切り上げしたRect作成
             Dim ceilingRect As Rect = GetSaveRect(originRect)
+
+            '背景色を保存するにチェックがなければ背景色を透明色にする
+            Dim b As SolidColorBrush = canvas1.Background
+            If cbSelectBackColor.IsChecked = False Then
+                canvas1.Background = New SolidColorBrush(Colors.Transparent)
+                'Canvasの再描画
+                Call ReRenderCanvas()
+            End If
+
             '描画先を作成
             Dim dv As New DrawingVisual
             Using dc As DrawingContext = dv.RenderOpen
@@ -548,6 +563,10 @@ Class MainWindow
             Using fs As New FileStream(dialogSave.FileName, FileMode.Create)
                 enc.Save(fs)
             End Using
+
+            '背景色を元に戻す
+            canvas1.Background = b
+
         End If
     End Sub
     '保存時のRect作成、小数点切り上げ
@@ -685,6 +704,22 @@ Class MainWindow
     Private Sub LeyoutDisplayThree() Handles rbLayout3.Click
         gridColumn0.Width = New GridLength(260)
         grid2.Height = 200
+    End Sub
+
+
+    '背景色選択
+    Private Sub btSelectBackColor_Click(sender As Object, e As RoutedEventArgs) Handles btSelectBackColor.Click
+        Dim cp As New ColorPalette
+        Dim b As SolidColorBrush = bdSelectBackColor.Background
+        If cp.ShowDialog(b.Color) Then
+            bdSelectBackColor.Background = cp.rectMihon.Fill
+        End If
+        canvas1.Background = bdSelectBackColor.Background
+    End Sub
+    '背景色リセット(透明色にする)
+    Private Sub btSelectBackColorReset_Click(sender As Object, e As RoutedEventArgs) Handles btSelectBackColorReset.Click
+        bdSelectBackColor.Background = New SolidColorBrush(Colors.Transparent)
+        canvas1.Background = bdSelectBackColor.Background
     End Sub
 
 
@@ -1252,7 +1287,7 @@ Class MainWindow
     'カラーパレットから色選択
     Private Sub btGetTransparent_Click(sender As Object, e As RoutedEventArgs) Handles btGetTransparentColor.Click
         Dim cp As New ColorPalette
-        cp.Owner = Me
+        cp.Owner = Me 'これは必要ないかな
 
         Dim b As SolidColorBrush = rectSelectColor.Fill
 
@@ -1526,6 +1561,5 @@ Class MainWindow
         numeWidth.Value = r.Width
 
     End Sub
-
 
 End Class

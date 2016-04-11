@@ -79,11 +79,11 @@
             <Grid>
 
               <Rectangle Fill="{TemplateBinding Background}" 
-    						Stroke="{TemplateBinding BorderBrush}"/>
+                Stroke="{TemplateBinding BorderBrush}"/>
 
               <ContentPresenter ContentTemplate="{TemplateBinding ContentTemplate}"
-    						HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-    						VerticalAlignment="{TemplateBinding Property=VerticalContentAlignment}" Margin="{TemplateBinding Padding}"/>
+                HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                VerticalAlignment="{TemplateBinding Property=VerticalContentAlignment}" Margin="{TemplateBinding Padding}"/>
 
             </Grid>
 
@@ -373,7 +373,7 @@ http://www.atmarkit.co.jp/ait/articles/1602/17/news034.html-->
                             <GroupBox Header="グリッドサイズ" Margin="0,10" Background="LemonChiffon">
                               <StackPanel Orientation="Horizontal">
                                 <Slider x:Name="gridSdr" Value="8" Minimum="1" Maximum="64" Width="128" 
-										SmallChange="1" IsSnapToTickEnabled="True" IsManipulationEnabled="True" />
+                    SmallChange="1" IsSnapToTickEnabled="True" IsManipulationEnabled="True" />
                                 <TextBlock x:Name="masuTbk" Text="{Binding Value, ElementName=gridSdr, StringFormat=00}" HorizontalAlignment="Center"/>
                               </StackPanel>
                             </GroupBox>
@@ -386,11 +386,14 @@ http://www.atmarkit.co.jp/ait/articles/1602/17/news034.html-->
                             </GroupBox>
                             <GroupBox Header="保存">
                               <StackPanel>
-                                <CheckBox Content="背景色を保存する" IsChecked="False"/>
+                                <CheckBox x:Name="cbSelectBackColor" Content="背景色を保存する" IsChecked="False"/>
                                 <DockPanel>
                                   <TextBlock Text="背景色" VerticalAlignment="Center" Margin="10,0,5,0"/>
-
-                                  <ComboBox Name="cmbBackColor" Background="{x:Null}" >
+                                  <Border x:Name="bdSelectBackColor" Width="30" Background="Transparent" BorderThickness="1" BorderBrush="LightGray"
+                                          Margin="0,0,5,0"/>
+                                  <Button x:Name="btSelectBackColor" Content="背景色選択" Margin="5,0"/>
+                                  <Button x:Name="btSelectBackColorReset" Content="リセット"/>
+                                  <!--<ComboBox Name="cmbBackColor" Background="{x:Null}" >
                                     <ComboBox.ItemTemplate>
                                       <DataTemplate>
                                         <StackPanel Orientation="Horizontal">
@@ -399,7 +402,7 @@ http://www.atmarkit.co.jp/ait/articles/1602/17/news034.html-->
                                         </StackPanel>
                                       </DataTemplate>
                                     </ComboBox.ItemTemplate>
-                                  </ComboBox>
+                                  </ComboBox>-->
                                 </DockPanel>
                               </StackPanel>
                             </GroupBox>
@@ -470,7 +473,7 @@ http://www.atmarkit.co.jp/ait/articles/1602/17/news034.html-->
                                     </WrapPanel>
                                     <DockPanel>
                                       <TextBox Text="{Binding Value, ElementName=sldScaleY, StringFormat=#0.000}"
-											MouseWheel="TextBox_MouseWheel" Tag="{Binding ElementName=sldScaleY}"/>
+                      MouseWheel="TextBox_MouseWheel" Tag="{Binding ElementName=sldScaleY}"/>
                                       <Slider x:Name="sldScaleY" Minimum="-3" Maximum="3" Value="1" LargeChange="0.1" TickFrequency="0.01" SmallChange="0.01" IsSnapToTickEnabled="True"/>
 
                                     </DockPanel>
@@ -501,15 +504,15 @@ http://www.atmarkit.co.jp/ait/articles/1602/17/news034.html-->
                               <StackPanel>
                                 <DockPanel>
                                   <local:NumericUpDown x:Name="numeSkewY" Value="{Binding Value, ElementName=sldSkewY, Mode=TwoWay}"
-                                         					Frequency="0.1" Width="60" Digits="1" Maximum="89" Minimum="-89"/>
+                                                  Frequency="0.1" Width="60" Digits="1" Maximum="89" Minimum="-89"/>
                                   <Slider x:Name="sldSkewY" Minimum="-89" Maximum="89" Value="0" LargeChange="1" TickFrequency="0.1" SmallChange="0.1"
-										IsSnapToTickEnabled="True"/>
+                    IsSnapToTickEnabled="True"/>
                                 </DockPanel>
                                 <DockPanel>
                                   <local:NumericUpDown x:Name="numeSkewX" Value="{Binding Value, ElementName=sldSkewX, Mode=TwoWay}"
-                                         					Frequency="0.1" Width="60" Digits="1" Maximum="89" Minimum="-89"/>
+                                                  Frequency="0.1" Width="60" Digits="1" Maximum="89" Minimum="-89"/>
                                   <Slider x:Name="sldSkewX" Minimum="-89" Maximum="89" Value="0" LargeChange="1" TickFrequency="1" SmallChange="0.1"
-										IsSnapToTickEnabled="True"/>
+                    IsSnapToTickEnabled="True"/>
                                 </DockPanel>
                               </StackPanel>
                             </GroupBox>
