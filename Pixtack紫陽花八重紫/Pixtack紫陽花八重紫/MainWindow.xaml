@@ -3,10 +3,10 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:Pixtack紫陽花八重紫"
+        xmlns:local="clr-namespace:Pixtack紫陽花2nd"
         xmlns:System="clr-namespace:System;assembly=mscorlib" x:Class="MainWindow"
         mc:Ignorable="d"
-        Title="MainWindow" Height="703" Width="902" AllowDrop="True" Icon="紫陽花1_4_12.ico" WindowStartupLocation="Manual">
+        Title="Pixtack紫陽花2nd" Height="703" Width="902" AllowDrop="True" Icon="紫陽花1_4_12.ico" WindowStartupLocation="Manual">
   <!--Width=554-->
   <Window.Resources>
     <ControlTemplate x:Key="ct" TargetType="{x:Type local:ExThumb}">

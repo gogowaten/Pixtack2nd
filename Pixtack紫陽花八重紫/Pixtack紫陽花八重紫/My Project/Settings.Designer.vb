@@ -98,9 +98,9 @@ Namespace My
     Friend Module MySettingsProperty
         
         <Global.System.ComponentModel.Design.HelpKeywordAttribute("My.Settings")>  _
-        Friend ReadOnly Property Settings() As Global.Pixtack紫陽花八重紫.MySettings
+        Friend ReadOnly Property Settings() As Global.Pixtack紫陽花2nd.MySettings
             Get
-                Return Global.Pixtack紫陽花八重紫.MySettings.Default
+                Return Global.Pixtack紫陽花2nd.MySettings.Default
             End Get
         End Property
     End Module

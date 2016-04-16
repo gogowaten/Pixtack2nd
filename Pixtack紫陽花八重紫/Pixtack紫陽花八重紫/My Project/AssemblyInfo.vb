@@ -11,7 +11,7 @@ Imports System.Windows
 
 ' アセンブリ属性の値を確認します
 
-<Assembly: AssemblyTitle("Pixtack紫陽花八重紫")>
+<Assembly: AssemblyTitle("Pixtack紫陽花2nd")>
 <Assembly: AssemblyDescription("")>
 <Assembly: AssemblyCompany("")>
 <Assembly: AssemblyProduct("Pixtack紫陽花八重紫")>

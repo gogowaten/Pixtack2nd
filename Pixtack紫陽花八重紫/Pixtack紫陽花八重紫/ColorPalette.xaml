@@ -1,0 +1,218 @@
+﻿<Window x:Class="ColorPalette"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Pixtack紫陽花2nd"
+        mc:Ignorable="d"
+        Title="ColorPalette" Height="500" Width="300">
+  <Window.Resources>
+    <ControlTemplate TargetType="Thumb" x:Key="exThumb">
+      <Grid Width="21" Height="21" Background="Transparent">
+        <Ellipse  Stroke="Black"/>
+        <Ellipse Width="19" Height="19" Stroke="White"/>
+      </Grid>
+    </ControlTemplate>
+    <Style TargetType="Slider" x:Key="sldStyle">
+      <Setter Property="IsMoveToPointEnabled" Value="True"/>
+      <Setter Property="IsSnapToTickEnabled" Value="True"/>
+    </Style>
+  </Window.Resources>
+
+  <Grid>
+    <StackPanel>
+      <Grid>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="auto"/>
+          <ColumnDefinition/>
+        </Grid.ColumnDefinitions>
+
+
+        <!--<StackPanel Orientation="Horizontal">-->
+        <StackPanel x:Name="spp" Grid.Column="1">
+          <!--<Grid x:Name="gridHue">
+        <Image x:Name="imgHue" Width="360" Height="{Binding ElementName=sldHue ,Path=Height}"/>
+        <Slider x:Name="sldHue" Maximum="359" Minimum="0" SmallChange="1" Width="370" Height="40" Value="0" Style="{StaticResource sldStyle}"/>
+      </Grid>-->
+          <DockPanel x:Name="dpFixedY" Margin="10,1,10,0">
+            <CheckBox x:Name="cbIsFixedY" Content="輝度固定" VerticalAlignment="Center" Margin="10,0"/>
+            <TextBlock Text="ガンマ値" VerticalAlignment="Center"/>
+            <TextBox x:Name="tbxGamma" Text="{Binding ElementName=sldGamma, Path=Value, StringFormat=#.0 ,UpdateSourceTrigger=PropertyChanged}"
+                   Width="30" HorizontalContentAlignment="Right"/>
+            <Slider x:Name="sldGamma" Maximum="7.4" Minimum="1" SmallChange="0.1" Value="2.2" Margin="4,0"
+                  TickFrequency="0.1" Style="{StaticResource sldStyle}"/>
+          </DockPanel>
+
+          <DockPanel x:Name="dpHue" Margin="10,1,10,0">
+            <TextBlock Text="H :" VerticalAlignment="Center" Width="20" />
+            <TextBox x:Name="tbxH" Text="{Binding ElementName=sldHue, Path=Value, StringFormat=0.0 ,UpdateSourceTrigger=PropertyChanged}" 
+                   Width="40" HorizontalContentAlignment="Right"/>
+            <Grid>
+              <Image x:Name="imgHue" Stretch="Fill" Margin="5,0"/>
+              <Slider x:Name="sldHue" Maximum="359" SmallChange="1" Value="0" Margin="4,0" Style="{StaticResource sldStyle}"/>
+            </Grid>
+          </DockPanel>
+
+
+          <!--<DockPanel x:Name="dpHue">
+        <TextBlock Text="H :" VerticalAlignment="Center" Margin="10,0,0,0" Width="20" />
+        <TextBox x:Name="tbxH" Text="{Binding ElementName=sldHue, Path=Value, StringFormat=0.0 ,UpdateSourceTrigger=PropertyChanged}" 
+                   Width="40" HorizontalContentAlignment="Right"/>
+        <Rectangle />
+      </DockPanel>-->
+
+          <DockPanel Margin="10,1,10,0">
+            <TextBlock Text="S :" VerticalAlignment="Center" Width="20" />
+            <TextBox x:Name="tbxS" Text="{Binding ElementName=sldS, Path=Value, StringFormat=0.0 ,UpdateSourceTrigger=PropertyChanged}" 
+                   Width="40" HorizontalContentAlignment="Right"/>
+            <Grid>
+              <Image x:Name="imgS" Stretch="Fill" Margin="5,0"/>
+              <Slider x:Name="sldS" Maximum="100" SmallChange="1" Value="0" Margin="4,0" Style="{StaticResource sldStyle}"/>
+            </Grid>
+          </DockPanel>
+          <DockPanel Margin="10,1,10,10">
+            <TextBlock Text="V :" VerticalAlignment="Center" Width="20"/>
+            <TextBox x:Name="tbxV" Text="{Binding ElementName=sldV, Path=Value, StringFormat=0.0 ,UpdateSourceTrigger=PropertyChanged}" 
+                   Width="40" HorizontalContentAlignment="Right"/>
+            <Grid>
+              <Image x:Name="imgV" Stretch="Fill" Margin="5,0"/>
+              <Slider x:Name="sldV" Maximum="100" SmallChange="1" Value="0" Margin="4,0" Style="{StaticResource sldStyle}"/>
+            </Grid>
+          </DockPanel>
+
+          <DockPanel Margin="10,1,10,0">
+            <TextBlock Text="A :" VerticalAlignment="Center" Width="20"/>
+            <TextBox x:Name="tbxA" Text="{Binding ElementName=sldA, Path=Value, StringFormat=0 ,UpdateSourceTrigger=PropertyChanged}" 
+                   Width="30" HorizontalContentAlignment="Right"/>
+            <Slider x:Name="sldA" Maximum="255" SmallChange="1" Value="0" Margin="4,0" Style="{StaticResource sldStyle}"/>
+          </DockPanel>
+
+          <DockPanel Margin="10,1,10,0">
+            <TextBlock Text="R :" VerticalAlignment="Center" Width="20"/>
+            <TextBox x:Name="tbxR" Text="{Binding ElementName=sldR, Path=Value, StringFormat=0 ,UpdateSourceTrigger=PropertyChanged}" 
+                   Width="30" HorizontalContentAlignment="Right"/>
+            <Slider x:Name="sldR" Maximum="255" SmallChange="1" Value="0" Margin="4,0" Style="{StaticResource sldStyle}"/>
+          </DockPanel>
+
+          <DockPanel Margin="10,1,10,0">
+            <TextBlock Text="G :" VerticalAlignment="Center" Width="20"/>
+            <TextBox x:Name="tbxG" Text="{Binding ElementName=sldG, Path=Value, StringFormat=0 ,UpdateSourceTrigger=PropertyChanged}" 
+                   Width="30" HorizontalContentAlignment="Right"/>
+            <Slider x:Name="sldG" Maximum="255" SmallChange="1" Value="0" Margin="4,0" Style="{StaticResource sldStyle}"/>
+          </DockPanel>
+
+
+          <DockPanel Margin="10,1,10,0">
+            <TextBlock Text="B :" VerticalAlignment="Center" Width="20"/>
+            <TextBox x:Name="tbxB" Text="{Binding ElementName=sldB, Path=Value, StringFormat=0 ,UpdateSourceTrigger=PropertyChanged}" 
+                   Width="30" HorizontalContentAlignment="Right"/>
+            <Slider x:Name="sldB" Maximum="255" SmallChange="1" Value="0" Margin="4,0" Style="{StaticResource sldStyle}"/>
+          </DockPanel>
+
+          <TabControl x:Name="tabPalette" HorizontalAlignment="Left"/>
+          <!--<TabControl x:Name="tabPalette" HorizontalAlignment="Left">
+            <TabItem Header="tab1">
+              <WrapPanel x:Name="wpPalette">
+
+              </WrapPanel>
+
+            </TabItem>
+          </TabControl>-->
+        </StackPanel>
+
+
+        <!--クリック画像-->
+        <StackPanel x:Name="spp2" HorizontalAlignment="Left">
+          <StackPanel>
+            <TextBlock Text="↓クリック" HorizontalAlignment="Center"/>
+            <Canvas x:Name="canvasSV" Width="100" Height="100" Margin="10,0,10,10" HorizontalAlignment="Left">
+              <Image x:Name="imgSV" Stretch="None" Width="100" Height="100"/>
+              <Thumb x:Name="thumb1" Background="White" Canvas.Left="0" Canvas.Top="0" Template="{StaticResource exThumb}"/>
+            </Canvas>
+          </StackPanel>
+
+          <StackPanel Margin="10,0,0,0">
+            <StackPanel Orientation="Horizontal">
+              <Grid>
+                <Image x:Name="imgTransparent" Width="100" Height="100" />
+                <Rectangle x:Name="rectMihon" Fill="Red" Width="100" Height="100"/>
+              </Grid>
+              <StackPanel>
+                <TextBlock Text="新しい色"/>
+                <TextBlock x:Name="tbkRGB" Text="#ARGB"/>
+                <TextBlock x:Name="tbkRGB2" Text="ARGB"/>
+                <StackPanel Orientation="Horizontal">
+                  <TextBlock Text="Y="/>
+                  <TextBlock x:Name="tbkNewY" Text="HDTV"/>
+                </StackPanel>
+                <TextBlock x:Name="tbkNewHSV" Text="HSV"/>
+              </StackPanel>
+            </StackPanel>
+
+            <StackPanel x:Name="spY" Orientation="Horizontal">
+              <Rectangle x:Name="rectY" Fill="Blue" Width="100" Height="100"/>
+              <StackPanel>
+                <TextBlock Text="比較用"/>
+                <StackPanel Orientation="Horizontal">
+                  <TextBlock Text="Y="/>
+                  <TextBlock x:Name="tbkOldY" Text="HDTV"/>
+
+                </StackPanel>
+                <TextBlock x:Name="tbkOldHSV" Text="HSV"/>
+
+              </StackPanel>
+            </StackPanel>
+            <CheckBox x:Name="cbTransparent" Content="市松模様"/>
+          </StackPanel>
+
+        </StackPanel>
+        <!--</StackPanel>-->
+      </Grid>
+
+
+      
+      <!--<DockPanel>
+        <TextBlock Text="NTSC Y : " VerticalAlignment="Center" Margin="10,0,0,0" Width="100" TextAlignment="Right"/>
+        <TextBox x:Name="tbxY" Text="{Binding ElementName=sldY, Path=Value, StringFormat=0 ,UpdateSourceTrigger=PropertyChanged}" 
+                   Width="30" HorizontalContentAlignment="Right"/>
+        <Slider x:Name="sldY" Maximum="255" SmallChange="1" Value="0" Margin="4,0"/>
+      </DockPanel>
+
+      <DockPanel>
+        <TextBlock Text="HDTV(2.2) Y : " VerticalAlignment="Center" Margin="10,0,0,0" Width="100" TextAlignment="Right"/>
+        <TextBox x:Name="tbxHDTVY" Text="{Binding ElementName=sldHDTVY, Path=Value, StringFormat=0 ,UpdateSourceTrigger=PropertyChanged}" 
+                   Width="30" HorizontalContentAlignment="Right"/>
+        <Slider x:Name="sldHDTVY" Maximum="255" SmallChange="1" Value="0" Margin="4,0"/>
+      </DockPanel>
+      <DockPanel>
+        <TextBlock Text="中間値法 Y : " VerticalAlignment="Center" Margin="10,0,0,0" Width="100" TextAlignment="Right"/>
+        <TextBox x:Name="tbxMiddleY" Text="{Binding ElementName=sldMiddleY, Path=Value, StringFormat=0 ,UpdateSourceTrigger=PropertyChanged}" 
+                   Width="30" HorizontalContentAlignment="Right"/>
+        <Slider x:Name="sldMiddleY" Maximum="255" SmallChange="1" Value="0" Margin="4,0"/>
+      </DockPanel>
+
+      <DockPanel>
+        <TextBlock Text="HDTV(3.2) Y : " VerticalAlignment="Center" Margin="10,0,0,0" Width="100" TextAlignment="Right"/>
+        <TextBox x:Name="tbxTestY" Text="{Binding ElementName=sldTestY, Path=Value, StringFormat=0 ,UpdateSourceTrigger=PropertyChanged}" 
+                   Width="30" HorizontalContentAlignment="Right"/>
+        <Slider x:Name="sldTestY" Maximum="255" SmallChange="1" Value="0" Margin="4,0"/>
+      </DockPanel>-->
+
+      <!--<Button x:Name="btTest" Content="test"/>-->
+     
+      
+      
+      <StackPanel x:Name="spOKorCancel" Orientation="Horizontal" FlowDirection="RightToLeft" Margin="10">
+        <Button x:Name="btCancel" Content="キャンセル" IsCancel="True" Width="100" Margin="10,0"/>
+        <Button x:Name="btOK" Content="OK" IsDefault="True" Width="100" Margin="10,0"/>
+      </StackPanel>
+
+
+    </StackPanel>
+
+
+
+
+
+  </Grid>
+</Window>

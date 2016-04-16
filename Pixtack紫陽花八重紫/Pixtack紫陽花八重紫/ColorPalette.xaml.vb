@@ -1,12 +1,12 @@
-﻿
-Imports System.Windows.Controls.Primitives
+﻿Imports System.Windows.Controls.Primitives
 Imports System.IO
+Imports System.ComponentModel
 
 'Paletteの色管理データ、シリアライズする
 <Serializable>
 Public Class PaletteARGB
     Inherits Collections.ObjectModel.ObservableCollection(Of IntARGB)
-
+    'Public Property ColorName As List(Of String)
 End Class
 
 'Paletteの色記録用
@@ -33,15 +33,24 @@ Public Structure IntARGB
     End Sub
 End Structure
 
-Class ColorPalette
-    Private Const MaxSV As Integer = 100 'SとVの最大値、100%表示なら100、詳細なら255指定
+Public Class ColorPalette
+    Private Const MaxSV As Integer = 255 'SとVの最大値、100%表示なら100、詳細なら255指定
     Private IsDrag As Boolean 'マーカーを移動中フラグ
     Private IsChangeHSV As Boolean 'HSVのスライダーで値変更中フラグ
     Private IsChangeRGB As Boolean 'RGBのスライダーで値変更中フラグ
     Private IsYFixed As Boolean     '輝度固定中フラグ
     Private FocusPalette As Border  '選択中のパレットのマス記録用
-    Private PaletteColors As New List(Of Border) 'パレットのマス表示用のBorderのリスト
-    Private PaletteDataARGB As New PaletteARGB 'Paletteの色管理データ、シリアライズする
+
+
+    'シリアライズするパレット用
+    'Private PaletteColors As New List(Of Border) 'パレットのマス表示用のBorderのリスト
+    'Private PaletteDataARGB As New PaletteARGB 'Paletteの色管理データ、シリアライズする
+
+    'シリアライズする複数タブパレット用
+    Private PaletteBorderMainList As New List(Of List(Of Border)) 'パレットのマス表示用のBorderのリスト
+    Private PaletteArgbMainList As New List(Of PaletteARGB) '複数タブパレットの色データ
+
+
 
     Public Structure HSV
         Public H As Double
@@ -225,7 +234,7 @@ Class ColorPalette
 
     Private Sub AddHueBar()
         '色相の画像作成
-        Dim w As Integer = 20 ' imgHue.Width
+        Dim w As Integer = 2 ' 20 ' imgHue.Width
         Dim h As Integer = 360 ' imgHue.Height '
         Dim wb As New WriteableBitmap(w, h, 96, 96, PixelFormats.Bgra32, Nothing)
         Dim stride As Integer = wb.BackBufferStride
@@ -317,6 +326,8 @@ Class ColorPalette
 
     End Sub
 
+
+
     'sv画像、クリックする用の画像
     Private Sub ChangeImageSV(hue As Double)
         Dim w As Integer = MaxSV + 1 '100％表示なら0から100なので101ピクセル必要、255表示なら256ピクセル必要なので+1
@@ -398,15 +409,53 @@ Class ColorPalette
     End Sub
 
 
+
+
+
+    '複数タブパレット
+
+    'パレットのタブ作成
+    Private Sub AddPaletteTabItem()
+        Dim sukima As Integer = 2 '隣のマスとの間隔
+        Dim bdSize As Integer = 20 'マスのサイズ
+        For i As Integer = 0 To 9 'タブベージの枚数
+            Dim tItem As New TabItem
+            Dim wp As New WrapPanel 'ラップパネル
+
+            With tItem
+                .Header = "P" & i
+                .Content = wp 'タブアイテムにラップパネル追加
+            End With
+            tabPalette.Items.Add(tItem) 'タブコントロールにタブアイテム追加
+
+            'ラップパネルにマス追加
+            Call AddPaletteAll(wp, sukima, bdSize)
+        Next
+
+
+        'タブコントロールの幅決定、横に12マス
+        'tab2.BorderThickness = New Thickness(0, 0, 0, 0)
+        With tabPalette
+            Dim tabW As Integer = (sukima + bdSize) * 12 +
+            .Padding.Left + .Padding.Right +
+            .BorderThickness.Left * .BorderThickness.Right +
+            SystemParameters.BorderWidth * 2 ' (sukima * 2)
+
+            .Width = tabW
+        End With
+    End Sub
+
     'パレットデータをシリアライズしてファイルに保存
     Private Sub SavePaletteData()
+
+        'xmlシリアライズ
         Dim appPath As String = My.Application.Info.DirectoryPath
-        Dim fileName As String = "PaletteColorData.bin"
+        Dim fileName As String = "PaletteColorData.xml"
         Dim filePath As String = appPath & "\" & fileName
+        Dim serializer As New Xml.Serialization.XmlSerializer(GetType(List(Of PaletteARGB)))
         Try
-            Using fs As New FileStream(filePath, FileMode.Create)
-                Dim bf As New System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
-                bf.Serialize(fs, PaletteDataARGB)
+            Using sw As New StreamWriter(filePath, False, New Text.UTF8Encoding(False))
+                serializer.Serialize(sw, PaletteArgbMainList)
             End Using
         Catch ex As Exception
             Dim str As String = "ファイルの保存に失敗しました" & vbNewLine
@@ -416,45 +465,49 @@ Class ColorPalette
 
     'パレットデータをデシリアライズして読み込む
     Private Sub LoadPaletteData()
-        Dim appPath As String = My.Application.Info.DirectoryPath
-        Dim fileName As String = "PaletteColorData.bin"
-        Dim filePath As String = appPath & "\" & fileName
-        'ファイルが存在しなければなにもしないで終了
-        If File.Exists(filePath) = False Then Exit Sub
 
+        'xmlデシリアライズ
+        Dim appPath As String = My.Application.Info.DirectoryPath
+        Dim fileName As String = "PaletteColorData.xml"
+        Dim filePath As String = appPath & "\" & fileName
+        If File.Exists(filePath) = False Then Return 'ファイルが存在しなければなにもしないで終了
+
+        Dim serializer As New Xml.Serialization.XmlSerializer(GetType(List(Of PaletteARGB)))
         Try
-            Using fs As New FileStream(filePath, FileMode.Open)
-                Dim bf As New Runtime.Serialization.Formatters.Binary.BinaryFormatter
-                PaletteDataARGB = bf.Deserialize(fs)
+            Using sr As New StreamReader(filePath, New Text.UTF8Encoding(False))
+                PaletteArgbMainList = serializer.Deserialize(sr)
             End Using
         Catch ex As Exception
             Dim str As String = "ファイルの読み込みに失敗しました" & vbNewLine
             MsgBox(str & ex.Message)
         End Try
     End Sub
-    Private Sub UpdatePalette()
-        'デシリアライズでパレットデータを読込
-        Call LoadPaletteData()
-        '読み込んだデータをPaletteに反映させる
-        For i As Integer = 0 To PaletteDataARGB.Count - 1
-            PaletteColors(i).Background = ARGBtoSolidBrush(PaletteDataARGB(i))
-        Next
-    End Sub
-
 
     '色を追加
     Private Sub PaletteAddColor()
         FocusPalette.Background = rectMihon.Fill
-        Dim i As Integer = PaletteColors.IndexOf(FocusPalette)
-        PaletteDataARGB(i) = SolidBrushtoARGB(FocusPalette.Background)
+        'ポップアップ
+        'Dim tt As New ToolTip
+        'tt.Content = FocusPalette.Background.ToString
+        'FocusPalette.ToolTip = tt
+
+        Dim ti As Integer = tabPalette.SelectedIndex '現在のタブindex
+        Dim i As Integer = PaletteBorderMainList(ti).IndexOf(FocusPalette) '選択中のマスIndex
+        Dim argbList As PaletteARGB = PaletteArgbMainList(ti) '対応するPaletteARGBリスト
+        argbList(i) = SolidBrushtoARGB(FocusPalette.Background)
+
         'パレットデータをセーブ
         Call SavePaletteData()
+
     End Sub
     '色を削除
     Private Sub PaletteColorDelete()
-        FocusPalette.Background = New SolidColorBrush(Colors.Transparent)
-        Dim i As Integer = PaletteColors.IndexOf(FocusPalette)
-        PaletteDataARGB(i) = New IntARGB(Colors.Transparent)
+        FocusPalette.Background = New SolidColorBrush(Colors.Transparent) '透明色にする
+        Dim ti As Integer = tabPalette.SelectedIndex '現在のタブindex
+        Dim i As Integer = PaletteBorderMainList(ti).IndexOf(FocusPalette) '選択中のマスIndex
+        Dim argbList As PaletteARGB = PaletteArgbMainList(ti) '対応するPaletteARGBリスト
+        argbList(i) = New IntARGB(Colors.Transparent) '透明色を書き込み
+
         'パレットデータをセーブ
         Call SavePaletteData()
     End Sub
@@ -472,8 +525,47 @@ Class ColorPalette
         Return cm
     End Function
 
+    '現在のパレットからARGBData再構築、バージョンアップでパレットの枚数を増やした時用
+    Private Sub RebuildingArgbData()
+        Dim tempData As New List(Of PaletteARGB)
+        For i As Integer = 0 To PaletteBorderMainList.Count - 1
+            Dim argbList As New PaletteARGB
+            Dim bList As List(Of Border) = PaletteBorderMainList(i)
+            For j As Integer = 0 To PaletteBorderMainList(0).Count - 1
+
+                argbList.Add(SolidBrushtoARGB(bList(j).Background))
+            Next
+            tempData.Add(argbList)
+        Next
+        PaletteArgbMainList.Clear()
+        PaletteArgbMainList = tempData
+        Call SavePaletteData()
+    End Sub
+    Private Sub UpdatePalette()
+        'デシリアライズでパレットデータを読込
+        Call LoadPaletteData()
+
+        '読み込んだデータをPaletteに反映させる
+        For i As Integer = 0 To PaletteArgbMainList.Count - 1
+            Dim argbList As PaletteARGB = PaletteArgbMainList(i)
+            Dim bList As List(Of Border) = PaletteBorderMainList(i)
+            For j As Integer = 0 To argbList.Count - 1
+                bList(j).Background = ARGBtoSolidBrush(argbList(j))
+            Next
+        Next
+
+        '読み込んだデータのARGBDataがパレットの枚数より少なかったら再構築
+        If PaletteArgbMainList.Count < PaletteBorderMainList.Count Then
+            Call RebuildingArgbData()
+        End If
+    End Sub
+    '選択中のPaletteを変更
+    Private Sub FocusedPalette2(sender As Object, e As RoutedEventArgs)
+        FocusPalette = sender
+    End Sub
+
     'Paletteクリックした時、hsvとαの各スライダーを変化させる
-    Private Sub Palette_Click(sender As Object, e As RoutedEventArgs)
+    Private Sub Palette_Click2(sender As Object, e As RoutedEventArgs)
         Dim b As SolidColorBrush = FocusPalette.Background
         '透明色(アルファ値が0)なら何もしないで終了
         If b.Color.A = 0 Then Return
@@ -485,46 +577,48 @@ Class ColorPalette
         sldA.Value = b.Color.A
     End Sub
 
-    '選択中のPaletteを変更
-    Private Sub FocusedPalette(sender As Object, e As RoutedEventArgs)
-        FocusPalette = sender
-    End Sub
-
-    'Palette用のBorder作成して追加
-    Private Sub AddPalette()
+    Private Sub AddPaletteAll(wp As WrapPanel, sukima As Integer, bdSize As Integer)
         '右クリックメニュー作成
         Dim cm As ContextMenu = AddContextMeruPalette()
 
         'Palette作成
-        For i As Integer = 0 To 100
-            Dim r As New Border
-            With r
+        'Dim bdSize As Integer = 20
+        'Dim sukima As Integer = 3
+        Dim bList As New List(Of Border)
+        Dim argbList As New PaletteARGB
+
+        For i As Integer = 1 To 120
+            Dim b As New Border
+            With b
                 .Background = New SolidColorBrush(Colors.Transparent) '最初は透明色を指定
-                .Width = 20
-                .Height = 20
+                .Width = bdSize
+                .Height = bdSize
                 .BorderThickness = New Thickness(1)
                 .BorderBrush = New SolidColorBrush(Colors.LightGray)
-                .Margin = New Thickness(2, 2, 0, 0)
+                .Margin = New Thickness(sukima, sukima, 0, 0)
                 .ContextMenu = cm '右クリックメニュー指定
 
             End With
 
             'WrapPanelに追加
-            wpPalette.Children.Add(r)
+            wp.Children.Add(b)
             'イベントとメソッドの関連付け
-            AddHandler r.PreviewMouseDown, AddressOf FocusedPalette
-            AddHandler r.MouseLeftButtonDown, AddressOf Palette_Click
+            AddHandler b.PreviewMouseDown, AddressOf FocusedPalette2
+            AddHandler b.MouseLeftButtonDown, AddressOf Palette_Click2
 
-            'Borderのリストに追加
-            PaletteColors.Add(r)
-            'シリアライズ用のリストにARGBを追加
-            PaletteDataARGB.Add(SolidBrushtoARGB(r.Background))
+            'BorderのSubリストに追加
+            bList.Add(b)
+            'シリアライズ用のARGBのSubリストに追加
+            argbList.Add(SolidBrushtoARGB(b.Background))
+            'argbList.ColorName.Add(b.Background.ToString)
         Next
 
-        ''デシリアライズでパレットデータを読み込んで反映
-        Call UpdatePalette()
+        'メインリストに追加
+        PaletteArgbMainList.Add(argbList)
+        PaletteBorderMainList.Add(bList)
 
     End Sub
+
 
 
 
@@ -560,6 +654,10 @@ Class ColorPalette
 
 
     'マーカーを移動して選択色表示
+    ''' <summary>
+    ''' マーカーを移動させる
+    ''' </summary>
+    ''' <param name="p">マーカーの中心座標</param>
     Private Sub MoveThumb(p As Point)
         If IsDrag Then Return
 
@@ -576,8 +674,14 @@ Class ColorPalette
 
         'textblockの更新
         tbkRGB.Text = $"ARGB = {col.ToString}"
+        tbkRGB2.Text = $"ARGB = {col.A:0},{col.R:0},{col.G:0},{col.B:0}"
 
-        tbkRGB2.Text = $"ARGB = {col.A:000},{col.R:000},{col.G:000},{col.B:000}"
+        tbkNewHSV.Text = $"HSV={sldHue.Value:#.0}, {sldS.Value:#.0}, {sldV.Value:#.0}"
+
+
+        '輝度値の表示更新
+        Call GetKido()
+
     End Sub
 
     'HSVの変更のときRGBを更新
@@ -608,8 +712,10 @@ Class ColorPalette
 
 
 
-    'ここから下はイベント
 
+
+
+    'ここから下はイベント
     Private Sub MainWindow_Initialized(sender As Object, e As EventArgs) Handles Me.Initialized
         '色相バー作成
         Call AddHueBar()
@@ -645,8 +751,10 @@ Class ColorPalette
         AddHandler sldG.ValueChanged, AddressOf sldRGB_ValueChanged
         AddHandler sldB.ValueChanged, AddressOf sldRGB_ValueChanged
 
-        '初期値設定
+        AddHandler sldGamma.ValueChanged, AddressOf sldGamma_ValueChanged
 
+
+        '初期値設定
         'sldHue.Value = 0
         'sldS.Value = MaxSV
         'sldV.Value = MaxSV
@@ -660,6 +768,7 @@ Class ColorPalette
         AddHandler sldR.MouseWheel, AddressOf Slider_MouseWheel
         AddHandler sldG.MouseWheel, AddressOf Slider_MouseWheel
         AddHandler sldB.MouseWheel, AddressOf Slider_MouseWheel
+        AddHandler sldGamma.MouseWheel, AddressOf Slider_MouseWheel
 
         AddHandler tbxH.MouseWheel, AddressOf TextBox_MouseWheel
         AddHandler tbxS.MouseWheel, AddressOf TextBox_MouseWheel
@@ -675,10 +784,24 @@ Class ColorPalette
         Call UpdateImageSV(imgS)
         Call UpdateImageSV(imgV)
 
-        'パレット部分作成
-        Call AddPalette()
 
-        'ウィンドウの高さ調整
+
+
+        'パレット部分作成
+        Call AddPaletteTabItem()
+        Call UpdatePalette()
+        'Call AddPalette()
+
+        'ウィンドウの幅調節
+        Dim w As Double = spp2.DesiredSize.Width
+        If w < 250 Then
+            spp2.Width = 250
+            Width = tabPalette.Width + 250 + 20 ' spp.ActualWidth + spp2.Width + 20
+        Else
+            Width = tabPalette.Width + spp2.ActualWidth + 20
+        End If
+
+        'ウィンドウの高さ自動調節
         SizeToContent = SizeToContent.Height
 
     End Sub
@@ -715,7 +838,6 @@ Class ColorPalette
         'スライダー移動
         sldS.Value = p.X
         sldV.Value = p.Y
-
     End Sub
 
 
@@ -754,6 +876,7 @@ Class ColorPalette
         Call UpdateImageSV(imgV)
         IsChangeHSV = False
     End Sub
+
     'RGBスライダー
     Private Sub sldRGB_ValueChanged(sender As Object, e As RoutedPropertyChangedEventArgs(Of Double))
 
@@ -812,7 +935,6 @@ Class ColorPalette
         End If
     End Sub
 
-
     '市松模様のオンオフ
     Private Sub cbTransparent_Click(sender As Object, e As RoutedEventArgs) Handles cbTransparent.Click
         Dim cb As CheckBox = DirectCast(sender, CheckBox)
@@ -828,32 +950,41 @@ Class ColorPalette
         End With
     End Sub
 
+
+
     Private Sub GetKido()
         Dim y As Double
         Dim r As Double = sldR.Value
         Dim g As Double = sldG.Value
         Dim b As Double = sldB.Value
-        Dim c1 As Color = Colors.Red
-        Dim c2 As Color = Colors.Blue
-        Dim cAdd As Color = Color.Add(c1, c2)
-        y = r * 0.29891 + g * 0.58661 + b * 0.11448
-        sldY.Value = y
+        'Dim c1 As Color = Colors.Red
+        'Dim c2 As Color = Colors.Blue
+        'Dim cAdd As Color = Color.Add(c1, c2)
+        'y = r * 0.29891 + g * 0.58661 + b * 0.11448
+        'sldY.Value = y
 
         Dim x As Double = sldGamma.Value
         y = (r ^ x) * 0.222015 + (g ^ x) * 0.706655 + (b ^ x) * 0.07133
         y = y ^ (1 / x)
-        sldHDTVY.Value = y
+        'sldHDTVY.Value = y
         tbkNewY.Text = $"{y:0.0}"
 
-        Dim min As Double = Math.Min(r, Math.Min(g, b))
-        Dim max As Double = Math.Max(r, Math.Max(g, b))
-        sldMiddleY.Value = (min + max) / 2
+        'Dim min As Double = Math.Min(r, Math.Min(g, b))
+        'Dim max As Double = Math.Max(r, Math.Max(g, b))
+        'sldMiddleY.Value = (min + max) / 2
 
-        x = 3.2
-        y = (r ^ x) * 0.222015 + (g ^ x) * 0.706655 + (b ^ x) * 0.07133
-        y = y ^ (1 / x)
-        sldTestY.Value = y
+        'x = 3.2
+        'y = (r ^ x) * 0.222015 + (g ^ x) * 0.706655 + (b ^ x) * 0.07133
+        'y = y ^ (1 / x)
+        'sldTestY.Value = y
 
+
+    End Sub
+
+
+    Private Sub cttext(sender As Object, e As RoutedEventArgs)
+
+        'r02.Fill = rectMihon.Fill
 
     End Sub
 
@@ -962,9 +1093,8 @@ Class ColorPalette
 
         dpHue.IsEnabled = True
         dpFixedY.IsEnabled = True
-        wpPalette.IsEnabled = True
-        spOKorCancel.IsEnabled = True
-
+        'gridHue.IsEnabled = True
+        tabPalette.IsEnabled = True
     End Sub
 
     'ガンマ値スライダー
@@ -983,17 +1113,24 @@ Class ColorPalette
 
 
 
+
+
+
     'OKボタンとキャンセルボタン
 
     'WPFサンプル:ShowメソッドとShowDaialogメソッド:Gushwell's C# Dev Notes
     'http://gushwell.ldblog.jp/archives/52285322.html
 
     Private Sub btOK_Click(sender As Object, e As RoutedEventArgs) Handles btOK.Click
+
         DialogResult = True
+
     End Sub
 
     Private Sub btCancel_Click(sender As Object, e As RoutedEventArgs) Handles btCancel.Click
+
         DialogResult = False
+
     End Sub
 
 
@@ -1002,6 +1139,7 @@ Class ColorPalette
     'http://homepage1.nifty.com/rucio/main/dotnet/shokyu/standard29.htm
     'ダイアログ開いた時、Colorを受け取ってスライダーに反映
     Public Overloads Function ShowDialog(col As Color) As Boolean
+
         '初期設定のTransparent透明なら赤に強制変換
         If col.Equals(Colors.Transparent) Then
             col = Colors.Red
@@ -1016,11 +1154,9 @@ Class ColorPalette
     End Function
 
 
+    'テストボタン
+    'Private Sub btTest_Click(sender As Object, e As RoutedEventArgs) Handles btTest.Click
+
+    'End Sub
+
 End Class
-
-
-
-
-
-
-

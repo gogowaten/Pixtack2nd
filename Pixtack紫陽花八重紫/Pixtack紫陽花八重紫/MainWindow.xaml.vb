@@ -1297,6 +1297,9 @@ Class MainWindow
             End With
             rectSelectColor.Fill = cp.rectMihon.Fill
         End If
+
+
+
     End Sub
 
     'マウスの下にある画像から色取得して取得中の色を表示
@@ -1446,7 +1449,7 @@ Class MainWindow
             Case Key.Right
                 p.Offset(g, 0)
         End Select
-        Dim f = FocusExThumb.Focusable
+        'Dim f = FocusExThumb.Focusable
         '座標をセット
         FocusExThumb.LocationInside = p
         Call AdjustLocation()
