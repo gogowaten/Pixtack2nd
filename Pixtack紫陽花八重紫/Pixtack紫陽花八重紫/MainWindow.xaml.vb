@@ -3,13 +3,15 @@ Imports System.Windows.Controls.Primitives
 Imports System.Windows.Controls.Panel
 Imports System.Windows.Controls.Canvas
 Imports System.ComponentModel
+Imports System.IO.Compression
 
 Class MainWindow
     'すべてのExThumbを入れておくリストコレスション
     Private OCollectionExThumb As New ObservableCollectionExThumb(Me)
     Public IsGetColor As Boolean 'クリックで色取得フラグ
 
-
+    'Private SaveDataList As New ObjectModel.ObservableCollection(Of SaveData)
+    'Private BitmapList As New ObjectModel.ObservableCollection(Of BitmapSource)
 
 
     Private WithEvents _FocusExThumb As ExThumb
@@ -32,6 +34,10 @@ Class MainWindow
                 Call GetSetTransform()
                 'ZIndex表示更新
                 Call RefreshDisplayZIndex()
+                'フォーカスをtbxDummyにする
+                tbxDummy.Focus()
+                'DataContextの変更
+                spTransform.DataContext = FocusExThumb.DataContext
             End If
 
             ''FocusExThumbの中身が入れ替わった時実行
@@ -320,6 +326,17 @@ Class MainWindow
         Return newLocate
     End Function
 
+    '連続追加時の二枚目以降の画像の位置取得
+    Private Function GetSlideLocation2(newLocate As Point) As Point
+        '最初の画像の位置
+        'Dim newLocate As Point = ex.LocationInside
+        Dim x As Integer = tbSliX.Text
+        Dim y As Integer = tbSliY.Text
+        If newLocate.X < 0 Then x = 0
+        If newLocate.Y < 0 Then y = 0
+        newLocate.Offset(x, y)
+        Return newLocate
+    End Function
     'ウィンドウに画像ファイルがドロップされた時
     Private Sub MainWindow_Drop(sender As Object, e As DragEventArgs) Handles Me.Drop
         If e.Data.GetDataPresent(DataFormats.FileDrop) = False Then Return
@@ -345,56 +362,163 @@ Class MainWindow
             newLocate = GetNewLocation()
         End If
 
+        'ExThumbを作成してCanvasに追加
+        Call AddExThumb(listPath, newLocate)
+
+    End Sub
+    Private Sub AddExThumb(listPath As List(Of String), newLocate As Point)
         'ファイルパスの数だけExThumb作成して表示
         For i As Integer = 0 To listPath.Count - 1
+            Dim sd As New SaveData With {.Angle = 0, .ScaleSync = True, .ScaleX = 1, .ScaleY = 1, .SkewX = 0, .SkewY = 0}
             'ファイルパスから画像を取得
-            'Dim bmp As BitmapImage = GetBitmapImage(listPath(i))
             Dim bmp As BitmapSource = GetBitmapImage(listPath(i))
             If bmp IsNot Nothing Then
+                'Call SetBitmapSource(bmp, newLocate)
+                Dim ex As ExThumb = SetBitmapSource(bmp, newLocate, sd)
+                '次のExThumbのLocate取得
+                newLocate = GetSlideLocation2(ex.LocationInside)
 
-                'コレクションに追加してCanvasに表示
-                Dim ex As ExThumb = SetOCollectionExThumb()
-                'ここで再描画処理が入るのでGetRectとかで今の値が取得できる
-                'テンプレートの中のExImage取得してSourceに画像を指定する
-                'Dim tmpimg As ExImage = GetTemplateImage(ex)
-                Dim img As ExImage = ex.Template.FindName("image1", ex)
-                img.RenderTransformOrigin = New Point(0.5, 0.5)
-                img.Source = bmp
+                ''コレクションに追加してCanvasに表示
+                'Dim ex As ExThumb = SetOCollectionExThumb()
+                ''ここで再描画処理が入るのでGetRectとかで今の値が取得できる
+                ''テンプレートの中のExImage取得してSourceに画像を指定する
+                ''Dim tmpimg As ExImage = GetTemplateImage(ex)
+                ''Dim img As ExImage = ex.Template.FindName("image1", ex)
+                'Dim img As ExImage = GetTemplateImage(ex)
 
-                'Dim cc As New ColorConvertedBitmap(bmp, New ColorContext(bmp.Format), New ColorContext(PixelFormats.Pbgra32), bmp.Format)
+                'With img
+                '    .RenderTransformOrigin = New Point(0.5, 0.5)
+                '    .Source = bmp
+
+                '    '変形関連の初期設定
+                '    Dim tg As New TransformGroup
+                '    tg.Children.Add(New RotateTransform)
+                '    tg.Children.Add(New ScaleTransform)
+                '    tg.Children.Add(New SkewTransform)
+                '    .RenderTransform = tg
+                'End With
+
+                'Dim sd As New SaveData With {.Angle = 0, .ScaleX = 1, .ScaleY = 1, .SkewX = 0, .SkewY = 0, .ScaleSync = True}
+                'ex.DataContext = sd
+                'spTransform.DataContext = sd ' ex.DataContext
+
+                'Call SetBindingTransform(img)
+
+                ''Dim cc As New ColorConvertedBitmap(bmp, New ColorContext(bmp.Format), New ColorContext(PixelFormats.Pbgra32), bmp.Format)
 
 
-                '各プロパティの指定
-                With ex
-                    .TemplateImage = img
-                    .BackupBitmap = bmp
-                    '.RenderTransformOrigin = New Point(0.5, 0.5)
-                    '.Source = bmp
-                    '.SourceImageSize = New Size(bmp.PixelWidth, bmp.PixelHeight)
-                    .FileName = listPath(i)
-                    .LocationInside = newLocate '元の位置
-                    '.Focusable = True 'フォーカスできるように
-                    '.RenderTransformOrigin = New Point(0.5, 0.5)
-                    '.SizeSeem = New Size(bmp.PixelWidth, bmp.PixelHeight) '見た目のサイズ、変形後サイズ
-                    '.LocationRenderDiff = New Point(0, 0) '実際と見た目の位置の差
 
-                    '.LocationSeem = newLocate '見かけ上の位置、変形後はこの値が変化する
-                    '.Height = bmp.PixelHeight 'これとWidthはどうするかな
-                    '.Width = bmp.PixelWidth '指定しないと100x100の画像は100.0139になる→
-                    '指定して100にするより無指定で100.0139にしておいたほうが綺麗に見える
-                    '保存時には関係なさそうなので無指定で
-                End With
-                '次の位置
-                newLocate = GetSlideLocation(ex)
+                ''各プロパティの指定
+                'With ex
+                '    .TemplateImage = img
+                '    .BackupBitmap = bmp
+                '    '.FileName = listPath(i)
+                '    .LocationInside = newLocate '元の位置
+                '    '.Focusable = True 'フォーカスできるように
+                '    '.RenderTransformOrigin = New Point(0.5, 0.5)
+                '    '.SizeSeem = New Size(bmp.PixelWidth, bmp.PixelHeight) '見た目のサイズ、変形後サイズ
+                '    '.LocationRenderDiff = New Point(0, 0) '実際と見た目の位置の差
 
-                AddHandler ex.DragDelta, AddressOf ExThumb_DragDelta 'これはマウスドラッグ用
+                '    '.LocationSeem = newLocate '見かけ上の位置、変形後はこの値が変化する
+                '    '.Height = bmp.PixelHeight 'これとWidthはどうするかな
+                '    '.Width = bmp.PixelWidth '指定しないと100x100の画像は100.0139になる→
+                '    '指定して100にするより無指定で100.0139にしておいたほうが綺麗に見える
+                '    '保存時には関係なさそうなので無指定で
+                'End With
+                ''次の位置
+                'newLocate = GetSlideLocation(ex)
 
-                FocusExThumb = ex '要る？→要る、画像追加時のCollectionに挿入するときに使う
+                'AddHandler ex.DragDelta, AddressOf ExThumb_DragDelta 'これはマウスドラッグ用
+
+                'FocusExThumb = ex '要る？→要る、画像追加時のCollectionに挿入するときに使う
 
             End If
         Next
+    End Sub
+
+    Private Function SetBitmapSource(bmp As BitmapSource, newLocate As Point, sd As SaveData) As ExThumb
+        'コレクションに追加してCanvasに表示
+        Dim ex As ExThumb = SetOCollectionExThumb()
+        'ここで再描画処理が入るのでGetRectとかで今の値が取得できる
+        'テンプレートの中のExImage取得してSourceに画像を指定する
+        'Dim img As ExImage = ex.Template.FindName("image1", ex)
+        Dim img As ExImage = GetTemplateImage(ex)
+        With img
+            .RenderTransformOrigin = New Point(0.5, 0.5)
+            .Source = bmp
+
+            '変形関連の初期設定
+            Dim tg As New TransformGroup
+            tg.Children.Add(New RotateTransform)
+            tg.Children.Add(New ScaleTransform)
+            tg.Children.Add(New SkewTransform)
+            .RenderTransform = tg
+        End With
+
+        'Dim sd As New SaveData With {.Angle = 0, .ScaleX = 1, .ScaleY = 1, .SkewX = 0, .SkewY = 0, .ScaleSync = True}
+        ex.DataContext = sd
+        spTransform.DataContext = sd ' ex.DataContext
+        Call SetBindingTransform(img)
+
+        'Dim cc As New ColorConvertedBitmap(bmp, New ColorContext(bmp.Format), New ColorContext(PixelFormats.Pbgra32), bmp.Format)
+
+        '各プロパティの指定
+        With ex
+            .TemplateImage = img
+            .BackupBitmap = bmp
+            .LocationInside = newLocate '元の位置
+        End With
+        ''次の位置
+        'newLocate = GetSlideLocation2(newLocate)
+
+        AddHandler ex.DragDelta, AddressOf ExThumb_DragDelta 'これはマウスドラッグ用
+
+        FocusExThumb = ex '要る？→要る、画像追加時のCollectionに挿入するときに使う
+        Return ex
+    End Function
+    Private Sub test(img As ExImage, ex As ExThumb)
 
     End Sub
+    Private Sub SetBindingTransform(img As ExImage)
+        'ExImageのRenderTransformのTransformGroupの中から各Transformを取得する
+        Dim ro As RotateTransform = GetTransform(img, GetType(RotateTransform))
+        Dim sc As ScaleTransform = GetTransform(img, GetType(ScaleTransform))
+        Dim sk As SkewTransform = GetTransform(img, GetType(SkewTransform))
+
+        'Bindingの設定
+        Call SubSetBinding(img, "Angle", ro, RotateTransform.AngleProperty)
+        Call SubSetBinding(img, "ScaleX", sc, ScaleTransform.ScaleXProperty)
+        Call SubSetBinding(img, "ScaleY", sc, ScaleTransform.ScaleYProperty)
+        Call SubSetBinding(img, "SkewX", sk, SkewTransform.AngleXProperty)
+        Call SubSetBinding(img, "SkewY", sk, SkewTransform.AngleYProperty)
+
+
+    End Sub
+    Private Sub SubSetBinding(img As ExImage, p As String, deob As DependencyObject, dep As DependencyProperty)
+        Dim bind As New Binding(p)
+        bind.Mode = BindingMode.TwoWay
+        BindingOperations.SetBinding(deob, dep, bind)
+    End Sub
+
+    '
+    ''' <summary>
+    ''' TransformGroupの中から指定したTransformを返す
+    ''' </summary>
+    ''' <param name="img">コントロール</param>
+    ''' <param name="tf"></param>
+    ''' <returns>GetType(RotateTransform)などで指定</returns>
+    Private Function GetTransform(img As ExImage, tf As Type) As Transform
+        Dim tg As TransformGroup = img.RenderTransform
+        For Each c As Transform In tg.Children
+            If tf = c.GetType Then
+                Return c
+                Exit For
+            End If
+        Next
+        Return Nothing
+    End Function
+
+
     'ファイルドドラッグ時のマウスカーソルエフェクト
     Private Sub MainWindow_PreviewDragOver(sender As Object, e As DragEventArgs) Handles Me.PreviewDragOver
         If e.Data.GetDataPresent(DataFormats.FileDrop) Then
@@ -418,9 +542,12 @@ Class MainWindow
     End Sub
     '1つ上に移動
     Private Sub btAge_Click(sender As Object, e As RoutedEventArgs) Handles btAge.Click
+        'なぜかカーソルキー上入力でMainWindowをクリックしたことになり
+        'ここが実行されてしまうのでイベント発生元がMainWindowだったらなにもしないで終了
+        If e.Source.Equals(Me) Then Return
+
         Call MoveZOrderUp()
-        'Dim z As Integer = OCollectionExThumb.IndexOf(FocusExThumb)
-        'Call ZOrder(z, z + 1)
+
     End Sub
     Private Sub MoveZOrderUp()
         Dim z As Integer = OCollectionExThumb.IndexOf(FocusExThumb)
@@ -428,9 +555,8 @@ Class MainWindow
     End Sub
     '1つ下に移動
     Private Sub btSage_Click(sender As Object, e As RoutedEventArgs) Handles btSage.Click
+        If e.Source.Equals(Me) Then Return
         Call MoveZOrderDown()
-        'Dim z As Integer = OCollectionExThumb.IndexOf(FocusExThumb)
-        'Call ZOrder(z, z - 1)
     End Sub
     Private Sub MoveZOrderDown()
         Dim z As Integer = OCollectionExThumb.IndexOf(FocusExThumb)
@@ -590,7 +716,7 @@ Class MainWindow
                 enc = New PngBitmapEncoder
             Case 2
                 Dim je As New JpegBitmapEncoder
-                je.QualityLevel = 97 '1-100 初期値は75
+                je.QualityLevel = sldJpegQuality.Value ' 97 '1-100 初期値は75
                 enc = je
             Case 3
                 enc = New BmpBitmapEncoder
@@ -626,14 +752,14 @@ Class MainWindow
                 ''著作者名
                 'meta.Copyright = "Copyright午後わてん"
 
-                meta.SetQuery("/app1/ifd/{ushort=305}", "Pixtack紫陽花八重紫")
+                meta.SetQuery("/app1/ifd/{ushort=305}", "Pixtack紫陽花2nd")
                 'meta.SetQuery("/app1/ifd/exif/{Ushort=37510}", "koment")
             Case 3
                 'meta = New BitmapMetadata("jpg")
             Case 4
                 'どれも無視されている？
                 meta = New BitmapMetadata("gif")
-                meta.SetQuery("/xmp/xmp:CreatorTool", "Pixtack紫陽花八重紫")
+                meta.SetQuery("/xmp/xmp:CreatorTool", "Pixtack紫陽花2nd")
                 'meta.SetQuery("/xmp/dc:description", "descriptionnnnnnnn")
             Case 5
                 meta = New BitmapMetadata("tiff")
@@ -692,6 +818,104 @@ Class MainWindow
         Call RemoveExThumb(FocusExThumb)
     End Sub
 
+    '編集状態をファイルに保存
+    Private Sub SaveToFile()
+        If FocusExThumb Is Nothing Then Return
+
+        '複数画像を1つのTIFF画像に変換
+        Dim BitmapList As List(Of BitmapSource) = GetAllBitmap()
+        Dim encoder As New TiffBitmapEncoder
+        Dim frame As BitmapFrame
+        For i As Integer = 0 To BitmapList.Count - 1
+            frame = BitmapFrame.Create(BitmapList(i))
+            encoder.Frames.Add(frame)
+        Next
+        Dim bm As New BitmapMetadata("tiff")
+
+        Dim saveDataList As List(Of SaveData) = GetSaveDataAll()
+
+        Dim fd As New Microsoft.Win32.SaveFileDialog
+        fd.DefaultExt = ".zip"
+        fd.Filter = "*.zip|*.zip"
+        fd.AddExtension = True
+        If fd.ShowDialog Then
+            Using zipStream As Stream = File.Create(fd.FileName)
+                Using archive As New ZipArchive(zipStream, ZipArchiveMode.Create)
+                    Dim entry As ZipArchiveEntry = archive.CreateEntry("data.bin", CompressionLevel.Fastest)
+                    Using entryStream As Stream = entry.Open
+                        Dim bf As New Runtime.Serialization.Formatters.Binary.BinaryFormatter
+                        bf.Serialize(entryStream, saveDataList)
+                    End Using
+
+                    entry = archive.CreateEntry("bitmap.tiff", CompressionLevel.Fastest)
+                    Using entryStream As Stream = entry.Open
+                        Using ms As New MemoryStream
+                            encoder.Save(ms)
+                            ms.Position = 0
+                            ms.CopyTo(entryStream)
+                        End Using
+                    End Using
+                End Using
+            End Using
+        End If
+    End Sub
+    'セーブするDataContext一覧を返す
+    Private Function GetSaveDataAll() As List(Of SaveData)
+        Dim sdList As New List(Of SaveData)
+        For i As Integer = 0 To OCollectionExThumb.Count - 1
+            sdList.Add(OCollectionExThumb(i).DataContext)
+        Next
+        Return sdList
+    End Function
+    'セーブする画像一覧の取得
+    Private Function GetAllBitmap() As List(Of BitmapSource)
+        Dim bList As New List(Of BitmapSource)
+        For i As Integer = 0 To OCollectionExThumb.Count - 1
+            bList.Add(OCollectionExThumb(i).TemplateImage.Source)
+        Next
+        Return bList
+    End Function
+    'セーブファイルの読み込み
+    Private Sub LoadFile()
+        Dim DataList As New List(Of SaveData)
+        Dim BitmapList As New List(Of BitmapSource)
+        Dim fd As New Microsoft.Win32.OpenFileDialog
+        fd.Filter = "*.zip|*.zip"
+        If fd.ShowDialog Then
+            Using zipStream As Stream = File.OpenRead(fd.FileName)
+                Using archive As New ZipArchive(zipStream, ZipArchiveMode.Read)
+                    '画像以外のデータの読み込み
+                    Dim entry As ZipArchiveEntry = archive.GetEntry("data.bin")
+                    Using entryStream As Stream = entry.Open
+                        Dim bf As New Runtime.Serialization.Formatters.Binary.BinaryFormatter
+                        DataList = bf.Deserialize(entryStream)
+                    End Using
+
+                    '画像の読み込み
+                    entry = archive.GetEntry("bitmap.tiff")
+                    Using entryStream As Stream = entry.Open
+                        Dim decoder As New TiffBitmapDecoder(entryStream, BitmapCreateOptions.None, BitmapCacheOption.OnLoad)
+                        'BitmapList.Clear()
+                        BitmapList.AddRange(decoder.Frames)
+                    End Using
+                End Using
+            End Using
+
+        End If
+
+        '読み込んだデータを元にExThumbをCanvasに追加
+        Dim newLocate As Point = GetNewLocation()
+        Dim ex As ExThumb
+        For i As Integer = 0 To BitmapList.Count - 1
+            ex = SetBitmapSource(BitmapList(i), newLocate, DataList(i))
+            newLocate = GetSlideLocation2(ex.LocationInside)
+        Next
+    End Sub
+
+
+
+
+
     'レイアウト変更
 
     Private Sub LeyoutDisplayOne() Handles rbLayout1.Click
@@ -742,7 +966,6 @@ Class MainWindow
         End With
 
 
-
         ''背景色コンボボックス
         'cmbBackColor.ItemsSource = GetType(Colors).GetProperties
 
@@ -775,7 +998,19 @@ Class MainWindow
 
     '設定のリセット
     Private Sub Button_Click_1(sender As Object, e As RoutedEventArgs)
+        Dim neko = FocusExThumb.TemplateImage.RenderTransform.GetValue(RotateTransform.AngleProperty)
+        Dim ore As SaveData = FocusExThumb.TemplateImage.DataContext
+        'FocusExThumb.SetBinding(TopProperty, New Binding("Left"))
+        'FocusExThumb.SetBinding(LeftProperty, New Binding("Top"))
 
+        FocusExThumb.SetBinding(ExThumb.LocatePropertyX, New Binding("Left"))
+        FocusExThumb.SetBinding(ExThumb.LocatePropertyY, New Binding("Top"))
+        FocusExThumb.LocateX = 100
+
+        Dim sd As SaveData = FocusExThumb.DataContext
+        sd.Left = 30
+
+        'ore.Angle = 30
         'Left = Settings1.Default.MainWindow_Left
         'Top = Settings1.Default.MainWindow_Top
 
@@ -886,15 +1121,31 @@ Class MainWindow
 
     'クリップボードから画像追加
     Private Sub Button_Click(sender As Object, e As RoutedEventArgs) Handles btClipboard.Click
-        Call AddFromClipboard()
+        'Call AddFromClipboard()
+        Call AddFromClipboard2()
     End Sub
 
-    'Private Sub age_Click(sender As Object, e As RoutedEventArgs) Handles age.Click
-    '    'Dim r As Rect = GetRect(FocusExThumb)
-    '    'Dim u As Rect = GetUnion()
-    '    'Call AdjustLocation()
-    '    'Call testApplyRotate()
-    'End Sub
+
+    Private Sub AddFromClipboard2()
+        Dim bi As New BitmapImage 'system.windows.media.imaging.bitmapimage
+        If My.Computer.Clipboard.ContainsImage Then
+            'Alphaがおかしいけどクリップボードから画像取得
+            Dim bs As BitmapSource = Clipboard.GetImage 'system.windows.interop.interopBitmap
+            'ピクセルフォーマットを変更する
+            'Dim bbb As New FormatConvertedBitmap(bs, PixelFormats.Pbgra32, Nothing, 0) 'バグでAlphaがおかしくなる
+            Dim bbb As New FormatConvertedBitmap(bs, PixelFormats.Bgr32, Nothing, 0) 'Alphaはなくなるけどそれ以外はまとも
+            'Bgr32だとaが無いせいか透明化の時におかしくなる、白を透明にすると無彩色すべてが透明になる感じ
+            'なのでピクセルフォーマット変換、Bgr32→Bgra32
+            Dim fcb As New FormatConvertedBitmap(bbb, PixelFormats.Bgra32, Nothing, 0)
+
+            Dim sd As New SaveData With {.Angle = 0, .ScaleSync = True, .ScaleX = 1, .ScaleY = 1, .SkewX = 0, .SkewY = 0}
+            '画像追加
+            SetBitmapSource(fcb, GetNewLocation, sd)
+
+        Else
+            MsgBox("クリップボードの中に画像はありませんでした")
+        End If
+    End Sub
 
 
 
@@ -946,49 +1197,49 @@ Class MainWindow
     '変形
     '選択画像の変形情報をタブに取り込む
     Private Sub GetSetTransform()
-        '画像の回転角度をタブのスライダーに反映する
-        Dim tf As Transform = FocusExThumb.TemplateImage.RenderTransform
-        'Dim gt As GeneralTransform = tf.Inverse '逆変換
-        Dim rt As New RotateTransform
-        Dim st As New ScaleTransform
-        Dim skewT As New SkewTransform
+        ''画像の回転角度をタブのスライダーに反映する
+        'Dim tf As Transform = FocusExThumb.TemplateImage.RenderTransform
+        ''Dim gt As GeneralTransform = tf.Inverse '逆変換
+        'Dim rt As New RotateTransform
+        'Dim st As New ScaleTransform
+        'Dim skewT As New SkewTransform
 
-        Dim angle As Double = 0
-        Dim scaleX As Double = 1
-        Dim scaleY As Double = 1
-        Dim skewX As Double = 0
-        Dim skewY As Double = 0
-        If tf.Value = Matrix.Identity Then
-            'Transformが空なら角度0
-            'angle = 0
+        'Dim angle As Double = 0
+        'Dim scaleX As Double = 1
+        'Dim scaleY As Double = 1
+        'Dim skewX As Double = 0
+        'Dim skewY As Double = 0
+        'If tf.Value = Matrix.Identity Then
+        '    'Transformが空なら角度0
+        '    'angle = 0
 
-        Else
-            'TransformをRotateTransformに変換してAngle取得
-            'Dim rt As RotateTransform = tf
+        'Else
+        '    'TransformをRotateTransformに変換してAngle取得
+        '    'Dim rt As RotateTransform = tf
 
-            Dim tGroup As TransformGroup = tf
-            Dim tCollection As TransformCollection = tGroup.Children
-            For Each t As Transform In tCollection
-                Select Case t.GetType
-                    Case rt.GetType
-                        rt = t
-                        angle = rt.Angle
-                    Case st.GetType
-                        st = t
-                        scaleX = st.ScaleX
-                        scaleY = st.ScaleY
-                    Case skewT.GetType
-                        skewT = t
-                End Select
-            Next
-            'angle = rt.Angle
-        End If
-        'スライダーのValueにセット
-        sldKaiten.Value = angle
-        sldScaleX.Value = scaleX
-        sldScaleY.Value = scaleY
-        sldSkewX.Value = skewT.AngleX
-        sldSkewY.Value = skewT.AngleY
+        '    Dim tGroup As TransformGroup = tf
+        '    Dim tCollection As TransformCollection = tGroup.Children
+        '    For Each t As Transform In tCollection
+        '        Select Case t.GetType
+        '            Case rt.GetType
+        '                rt = t
+        '                angle = rt.Angle
+        '            Case st.GetType
+        '                st = t
+        '                scaleX = st.ScaleX
+        '                scaleY = st.ScaleY
+        '            Case skewT.GetType
+        '                skewT = t
+        '        End Select
+        '    Next
+        '    'angle = rt.Angle
+        'End If
+        ''スライダーのValueにセット
+        'sldKaiten.Value = angle
+        'sldScaleX.Value = scaleX
+        'sldScaleY.Value = scaleY
+        'sldSkewX.Value = skewT.AngleX
+        'sldSkewY.Value = skewT.AngleY
 
         '描画モード
         Dim img As ExImage = FocusExThumb.TemplateImage
@@ -1016,45 +1267,20 @@ Class MainWindow
 
     '回転スライダー
     Private Sub sldKaiten_ValueChanged(sender As Object, e As RoutedPropertyChangedEventArgs(Of Double)) Handles sldKaiten.ValueChanged
-        If FocusExThumb Is Nothing Then Return
-        'Thumbを回転じゃなくて中のExImageを回転させればマウス移動の方向が見た目通りになる
-        Dim img As ExImage = FocusExThumb.TemplateImage
-        Dim rt As New RotateTransform(e.NewValue)
+        'If FocusExThumb Is Nothing Then Return
+        ''Thumbを回転じゃなくて中のExImageを回転させればマウス移動の方向が見た目通りになる
+        'Dim img As ExImage = FocusExThumb.TemplateImage
+        'Dim rt As New RotateTransform(e.NewValue)
 
         ''画像の角度がスライダーの値と同じなら何もしないで終了
-        'If rt.Angle = e.NewValue Then Return
+        ''If rt.Angle = e.NewValue Then Return
 
-        rt.Angle = e.NewValue
-        Dim st As New ScaleTransform(sldScaleX.Value, sldScaleY.Value)
-        Dim skew As New SkewTransform(sldSkewX.Value, sldSkewY.Value)
-        Call TransformExImage(rt, st, skew)
+        'rt.Angle = e.NewValue
+        'Dim st As New ScaleTransform(sldScaleX.Value, sldScaleY.Value)
+        'Dim skew As New SkewTransform(sldSkewX.Value, sldSkewY.Value)
+        'Call TransformExImage(rt, st, skew)
 
 
-        ''Dim ma As Integer = e.NewValue Mod 90
-        ''Dim bi As BitmapImage = FocusExThumb.Source
-        ''Dim tfb As New TransformedBitmap
-        ''Dim tf As Transform
-        ''tf = New RotateTransform(e.NewValue - ma)
-        ''With tfb
-        ''    .BeginInit()
-        ''    .Source = bi
-        ''    .Transform = tf
-        ''    .EndInit()
-        ''    .Freeze()
-        ''End With
-        ''Dim enc As New BmpBitmapEncoder
-        ''enc.Frames.Add(BitmapFrame.Create(tfb))
-
-        ''Dim bs As BitmapSource
-        ''Using ms As New MemoryStream()
-        ''    enc.Save(ms)
-        ''    ms.Seek(0, SeekOrigin.Begin)
-        ''    Dim dec = BitmapDecoder.Create(ms, BitmapCreateOptions.None, BitmapCacheOption.OnLoad)
-        ''    bs = dec.Frames(0)
-
-        ''End Using
-
-        ''FocusExThumb.Source = bs
 
     End Sub
 
@@ -1089,61 +1315,56 @@ Class MainWindow
     'Private Sub sldScaleX_ValueChanged(sender As Object, e As RoutedPropertyChangedEventArgs(Of Double)) Handles sldScaleX.ValueChanged
     '    If FocusExThumb Is Nothing Then Return
 
-    '    ''画像の拡大率がスライダーと同じなら何もしないで終了
-    '    'If st.ScaleX = e.NewValue Then Return
+    ''画像の拡大率がスライダーと同じなら何もしないで終了
+    ''If st.ScaleX = e.NewValue Then Return
 
-    '    Dim yScale As Double = sldScaleY.Value
-    '    Dim st As New ScaleTransform(e.NewValue, yScale)
-    '    Dim rt As New RotateTransform(sldKaiten.Value)
+    'Dim yScale As Double = sldScaleY.Value
+    'Dim st As New ScaleTransform(e.NewValue, yScale)
+    'Dim rt As New RotateTransform(sldKaiten.Value)
 
-    '    Call ScaleChange(st, rt)
+    'Call ScaleChange(st, rt)
+
+
     'End Sub
-    Private Sub sldScaleY_ValueChanged(sender As Object, e As RoutedPropertyChangedEventArgs(Of Double)) Handles sldScaleX.ValueChanged, sldScaleY.ValueChanged
-        If FocusExThumb Is Nothing Then Return
-        Dim sld As Slider = sender
-        Dim x As Double
-        Dim y As Double
-        Dim nv As Double = e.NewValue
 
-        If cbTateyokoSync.IsChecked Then
-            x = nv
-            y = nv
-            If sender.Equals(sldScaleX) Then
-                'x = e.NewValue
-                'y = sldScaleY.Value
-                sldScaleY.Value = y
-                e.Handled = False
-            Else
-                'x = sldScaleX.Value
-                'y = e.NewValue
-                sldScaleX.Value = x
-                e.Handled = False
-            End If
-        ElseIf sender.Equals(sldScaleX) Then
-            x = e.NewValue
-            y = sldScaleY.Value
-        Else
-            x = sldScaleX.Value
-            y = e.NewValue
-        End If
+    'Private Sub sldScaleY_ValueChanged(sender As Object, e As RoutedPropertyChangedEventArgs(Of Double)) Handles sldScaleX.ValueChanged, sldScaleY.ValueChanged
+    '    If FocusExThumb Is Nothing Then Return
+    '    Dim sld As Slider = sender
+    '    Dim x As Double
+    '    Dim y As Double
+    '    Dim nv As Double = e.NewValue
 
-        Dim st As New ScaleTransform(x, y)
-        Dim rt As New RotateTransform(sldKaiten.Value)
-        Dim skew As New SkewTransform(sldSkewX.Value, sldSkewY.Value)
+    '    If cbTateyokoSync.IsChecked Then
+    '        x = nv
+    '        y = nv
+    '        If sender.Equals(sldScaleX) Then
+    '            'x = e.NewValue
+    '            'y = sldScaleY.Value
+    '            sldScaleY.Value = y
+    '            e.Handled = False
+    '        Else
+    '            'x = sldScaleX.Value
+    '            'y = e.NewValue
+    '            sldScaleX.Value = x
+    '            e.Handled = False
+    '        End If
+    '    ElseIf sender.Equals(sldScaleX) Then
+    '        x = e.NewValue
+    '        y = sldScaleY.Value
+    '    Else
+    '        x = sldScaleX.Value
+    '        y = e.NewValue
+    '    End If
+
+    '    Dim st As New ScaleTransform(x, y)
+    '    Dim rt As New RotateTransform(sldKaiten.Value)
+    '    Dim skew As New SkewTransform(sldSkewX.Value, sldSkewY.Value)
+
+    '    Call TransformExImage(rt, st, skew)
 
 
 
-        'Dim xScale As Double = sldScaleX.Value
-        'Dim yScale As Double = e.NewValue
-        'If xScale = yScale Then
-
-        'End If
-        'Dim st As New ScaleTransform(xScale, e.NewValue)
-        'Dim rt As New RotateTransform(sldKaiten.Value)
-
-        'Call ScaleChange(st, rt)
-        Call TransformExImage(rt, st, skew)
-    End Sub
+    'End Sub
     'Private Sub ScaleChange(st As ScaleTransform, rt As RotateTransform)
     '    Dim tfCollection As New TransformCollection
     '    tfCollection.Add(st)
@@ -1201,22 +1422,22 @@ Class MainWindow
 
     '傾斜
     Private Sub sldtest_ValueChanged(sender As Object, e As RoutedPropertyChangedEventArgs(Of Double)) Handles sldSkewX.ValueChanged, sldSkewY.ValueChanged
-        If FocusExThumb Is Nothing Then Return
-        Dim x As Double
-        Dim y As Double
-        If sender.Equals(sldSkewX) Then
-            x = e.NewValue
-            y = sldSkewY.Value
-        Else
-            x = sldSkewX.Value
-            y = e.NewValue
-        End If
+        'If FocusExThumb Is Nothing Then Return
+        'Dim x As Double
+        'Dim y As Double
+        'If sender.Equals(sldSkewX) Then
+        '    x = e.NewValue
+        '    y = sldSkewY.Value
+        'Else
+        '    x = sldSkewX.Value
+        '    y = e.NewValue
+        'End If
 
 
-        Dim skew As New SkewTransform(x, y, 0.5, 0.5)
-        Dim scale As New ScaleTransform(sldScaleX.Value, sldScaleY.Value)
-        Dim rotate As New RotateTransform(sldKaiten.Value)
-        Call TransformExImage(rotate, scale, skew)
+        'Dim skew As New SkewTransform(x, y, 0.5, 0.5)
+        'Dim scale As New ScaleTransform(sldScaleX.Value, sldScaleY.Value)
+        'Dim rotate As New RotateTransform(sldKaiten.Value)
+        'Call TransformExImage(rotate, scale, skew)
 
     End Sub
 
@@ -1294,8 +1515,9 @@ Class MainWindow
         If cp.ShowDialog(b.Color) Then
             With cp
                 tbSelectColorARGB.Text = $"ARGB={ .sldA.Value},{ .sldR.Value},{ .sldG.Value},{ .sldB.Value}"
+                rectSelectColor.Fill = .rectMihon.Fill
+                rectSelectColor.Tag = Color.FromArgb(.sldA.Value, .sldR.Value, .sldG.Value, .sldB.Value)
             End With
-            rectSelectColor.Fill = cp.rectMihon.Fill
         End If
 
 
@@ -1454,10 +1676,12 @@ Class MainWindow
         FocusExThumb.LocationInside = p
         Call AdjustLocation()
 
+
         'フォーカスをgrid2にすることで点線枠を出さない
         'grid2.Focus()
         'canvas1.Focus()
-        mihon.Focus()
+        'mihon.Focus()
+        'tbxDummy.Focus()
 
     End Sub
 
@@ -1471,25 +1695,47 @@ Class MainWindow
             Case ModifierKeys.Alt
 
             Case ModifierKeys.None
-                Select Case e.Key
-                    Case Key.PageUp
-                        Call MoveZOrderUp()
-                    Case Key.PageDown
-                        Call MoveZOrderDown()
-                    Case Key.F4
-                        Call RemoveExThumb(FocusExThumb)
-                    Case Key.Up
-                        Call mooooove(e.Key)
-                    Case Key.Down
-                        Call mooooove(e.Key)
-                    Case Key.Left
-                        Call mooooove(e.Key)
-                    Case Key.Right
-                        Call mooooove(e.Key)
-                End Select
+                'Select Case e.Key
+                '    Case Key.PageUp
+                '        Call MoveZOrderUp()
+                '    Case Key.PageDown
+                '        Call MoveZOrderDown()
+                '    Case Key.F4
+                '        Call RemoveExThumb(FocusExThumb)
+                '    Case Key.Up
+                '        Call mooooove(e.Key)
+                '    Case Key.Down
+                '        Call mooooove(e.Key)
+                '    Case Key.Left
+                '        Call mooooove(e.Key)
+                '    Case Key.Right
+                '        Call mooooove(e.Key)
+                'End Select
         End Select
     End Sub
 
+    Private Sub tbxDummy_previewKeyDown(sender As Object, e As KeyEventArgs) Handles tbxDummy.PreviewKeyDown
+        If Keyboard.Modifiers = ModifierKeys.None Then
+
+            Select Case e.Key
+                Case Key.PageUp
+                    Call MoveZOrderUp()
+                Case Key.PageDown
+                    Call MoveZOrderDown()
+                Case Key.F4
+                    Call RemoveExThumb(FocusExThumb)
+                Case Key.Up
+                    Call mooooove(e.Key)
+                Case Key.Down
+                    Call mooooove(e.Key)
+                Case Key.Left
+                    Call mooooove(e.Key)
+                Case Key.Right
+                    Call mooooove(e.Key)
+            End Select
+        End If
+
+    End Sub
     '元に戻すボタン
     Private Sub btReset_Click(sender As Object, e As RoutedEventArgs) Handles btReset.Click
         Call ResetExThumb()
@@ -1566,3 +1812,74 @@ Class MainWindow
     End Sub
 
 End Class
+
+'<Serializable>
+'Public Class SaveData
+'    Implements INotifyPropertyChanged
+'    <NonSerialized>
+'    Public Event PropertyChanged As PropertyChangedEventHandler Implements INotifyPropertyChanged.PropertyChanged
+'    Private Sub OnPropertyChanged(propertyName As String)
+'        RaiseEvent PropertyChanged(Me, New PropertyChangedEventArgs(propertyName))
+'    End Sub
+
+'    '回転角度
+'    Private Property _Angle As Double
+'    Public Property Angle As Double
+'        Get
+'            Return _Angle
+'        End Get
+'        Set(value As Double)
+'            _Angle = value
+'            Call OnPropertyChanged("Angle")
+'        End Set
+'    End Property
+
+'    '拡大率横
+'    Private Property _ScaleX As Double
+'    Public Property ScaleX As Double
+'        Get
+'            Return _ScaleX
+'        End Get
+'        Set(value As Double)
+'            _ScaleX = value
+'            Call OnPropertyChanged("ScaleX")
+'        End Set
+'    End Property
+
+'    '拡大率縦
+'    Private Property _ScaleY As Double
+'    Public Property ScaleY As Double
+'        Get
+'            Return _ScaleY
+'        End Get
+'        Set(value As Double)
+'            _ScaleY = value
+'            Call OnPropertyChanged("ScaleY")
+'        End Set
+'    End Property
+
+'    '傾斜横
+'    Private Property _SkewX As Double
+'    Public Property SkewX As Double
+'        Get
+'            Return _SkewX
+'        End Get
+'        Set(value As Double)
+'            _SkewX = value
+'            Call OnPropertyChanged("SkewX")
+'        End Set
+'    End Property
+
+'    '傾斜縦
+'    Private Property _SkewY As Double
+'    Public Property SkewY As Double
+'        Get
+'            Return _SkewY
+'        End Get
+'        Set(value As Double)
+'            _SkewY = value
+'            Call OnPropertyChanged("SkewY")
+'        End Set
+'    End Property
+
+'End Class

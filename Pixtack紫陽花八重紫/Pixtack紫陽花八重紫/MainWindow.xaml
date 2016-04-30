@@ -229,24 +229,29 @@ http://www.atmarkit.co.jp/ait/articles/1602/17/news034.html-->
                   </Grid.RowDefinitions>
 
                   <StackPanel Grid.ColumnSpan="2">
-                    <Menu Grid.ColumnSpan="2" VerticalAlignment="Top">
+                    <Menu x:Name="menu1" Grid.ColumnSpan="2" VerticalAlignment="Top">
                       <MenuItem Header="ファイル(_F)">
                         <!--<MenuItem Command="New"/>-->
                         <!--<MenuItem Command="SaveAs"/>-->
                         <MenuItem Header="クリップボードから画像追加" Click="AddFromClipboard"/>
                         <MenuItem Header="名前を付けて保存(全体)(_S)" Click="SaveAllImage"/>
+                        <MenuItem Header="編集状態をファイルに保存" Click="SaveToFile"/>
+                        <MenuItem Header="編集状態ファイルを開く" Click="LoadFile"/>
                       </MenuItem>
                       <MenuItem Header="編集(_E)">
                         <MenuItem Header="元の画像に戻す" Click="ResetExThumb"/>
                         <Separator/>
                         <MenuItem Header="選択画像を削除" Click="RemoveExThumb" InputGestureText="F4"/>
-                        <MenuItem Command="Cut"/>
+                        <!--<MenuItem Command="Cut"/>
                         <MenuItem Command="Copy"/>
-                        <MenuItem Command="Undo"/>
+                        <MenuItem Command="Undo"/>-->
                       </MenuItem>
                       <MenuItem Header="移動(_M)">
-                        <MenuItem Header="上層へ(_U)" Command="MoveUp" InputGestureText="PageUp"/>
-                        <MenuItem Header="下層へ(_D)" Command="MoveDown" InputGestureText="PageDown"/>
+                        <!--<MenuItem Header="上層へ(_U)" Command="MoveUp" InputGestureText="PageUp"/>
+                        <MenuItem Header="下層へ(_D)" Command="MoveDown" InputGestureText="PageDown"/>-->
+                        <MenuItem x:Name="miMoveUp" Header="上層へ(_U)"  InputGestureText="PageUp" Click="btAge_Click"/>
+                        <MenuItem x:Name="miMoveDown" Header="下層へ(_D)"  InputGestureText="PageDown" Click="btSage_Click"/>
+
                       </MenuItem>
                       <MenuItem Header="表示(_V)">
                         <MenuItem x:Name="miViewThree" Header="レイアウト3ペイン" Click="LeyoutDisplayThree" IsChecked="{Binding IsChecked, ElementName=rbLayout3, Mode=TwoWay}" IsCheckable="True"/>
@@ -311,7 +316,7 @@ http://www.atmarkit.co.jp/ait/articles/1602/17/news034.html-->
                         <Border  Height="10"/>
                         <Button x:Name="btRemove" Content="消去" Background="Gray" Foreground="White" Margin="1"/>
                         <Button x:Name="btRemoveAll" Content="全消去" Background="Gray" Foreground="White" Margin="1"/>
-                        <Button Content="test" Click="Button_Click_1" IsEnabled="True"/>
+                        <Button Content="SetBitmapSource" Click="Button_Click_1" IsEnabled="True"/>
                       </StackPanel>
                     </Grid>
                     <!--</ScrollViewer>-->
@@ -370,13 +375,15 @@ http://www.atmarkit.co.jp/ait/articles/1602/17/news034.html-->
 
                               </StackPanel>
                             </GroupBox>
-                            <GroupBox Header="グリッドサイズ" Margin="0,10" Background="LemonChiffon">
+
+                            <GroupBox Header="グリッドサイズ" Margin="0,5" Background="LemonChiffon">
                               <StackPanel Orientation="Horizontal">
                                 <Slider x:Name="gridSdr" Value="8" Minimum="1" Maximum="64" Width="128" 
                     SmallChange="1" IsSnapToTickEnabled="True" IsManipulationEnabled="True" />
                                 <TextBlock x:Name="masuTbk" Text="{Binding Value, ElementName=gridSdr, StringFormat=00}" HorizontalAlignment="Center"/>
                               </StackPanel>
                             </GroupBox>
+
                             <GroupBox Header="レイアウト">
                               <StackPanel Orientation="Horizontal">
                                 <RadioButton x:Name="rbLayout3" Content="3ペイン(標準)" Margin="5,0" IsChecked="True" Template="{StaticResource test}"/>
@@ -384,16 +391,16 @@ http://www.atmarkit.co.jp/ait/articles/1602/17/news034.html-->
                                 <RadioButton x:Name="rbLayout1" Content="1ペイン" Margin="5,0" Template="{StaticResource test}"/>
                               </StackPanel>
                             </GroupBox>
-                            <GroupBox Header="保存">
-                              <StackPanel>
-                                <CheckBox x:Name="cbSelectBackColor" Content="背景色を保存する" IsChecked="False"/>
-                                <DockPanel>
-                                  <TextBlock Text="背景色" VerticalAlignment="Center" Margin="10,0,5,0"/>
-                                  <Border x:Name="bdSelectBackColor" Width="30" Background="Transparent" BorderThickness="1" BorderBrush="LightGray"
+
+                            <GroupBox Header="背景" Padding="2">
+                              <DockPanel>
+                                <!--<TextBlock Text="背景色" VerticalAlignment="Center" Margin="10,0,5,0"/>-->
+                                <TextBox x:Name="tbxDummy" Width="0"/>
+                                <Button x:Name="btSelectBackColor" Content="背景色選択" Margin="5,0"/>
+                                <Border x:Name="bdSelectBackColor" Width="30" Background="Transparent" BorderThickness="1" BorderBrush="LightGray"
                                           Margin="0,0,5,0"/>
-                                  <Button x:Name="btSelectBackColor" Content="背景色選択" Margin="5,0"/>
-                                  <Button x:Name="btSelectBackColorReset" Content="リセット"/>
-                                  <!--<ComboBox Name="cmbBackColor" Background="{x:Null}" >
+                                <Button x:Name="btSelectBackColorReset" Content="リセット(透明)"/>
+                                <!--<ComboBox Name="cmbBackColor" Background="{x:Null}" >
                                     <ComboBox.ItemTemplate>
                                       <DataTemplate>
                                         <StackPanel Orientation="Horizontal">
@@ -403,6 +410,18 @@ http://www.atmarkit.co.jp/ait/articles/1602/17/news034.html-->
                                       </DataTemplate>
                                     </ComboBox.ItemTemplate>
                                   </ComboBox>-->
+                              </DockPanel>
+
+                            </GroupBox>
+
+                            <GroupBox Header="保存時の設定">
+                              <StackPanel>
+                                <CheckBox x:Name="cbSelectBackColor" Content="背景色も保存する" IsChecked="False" Margin="2"/>
+                                <DockPanel>
+                                  <TextBlock Text="jpeg品質"/>
+                                  <TextBlock Text="{Binding ElementName=sldJpegQuality,Path=Value,StringFormat=000}" Margin="2,0"/>
+                                  <Slider x:Name="sldJpegQuality" Value="97" Minimum="1" Maximum="100" SmallChange="1" IsSnapToTickEnabled="True"
+                                          IsMoveToPointEnabled="True"/>
                                 </DockPanel>
                               </StackPanel>
                             </GroupBox>
@@ -412,7 +431,7 @@ http://www.atmarkit.co.jp/ait/articles/1602/17/news034.html-->
                       </TabItem>
                       <TabItem x:Name="tabItemTransform" Header="変形">
                         <ScrollViewer VerticalScrollBarVisibility="Auto" >
-                          <StackPanel>
+                          <StackPanel x:Name="spTransform">
                             <!--<Button x:Name="btGetTransform" Content="Get" Background="Khaki"/>-->
                             <!--<Button x:Name="btSetTransform" Content="Set" />-->
                             <GroupBox Header="描画モード" Background="MintCream">
@@ -427,10 +446,10 @@ http://www.atmarkit.co.jp/ait/articles/1602/17/news034.html-->
                               <StackPanel>
                                 <DockPanel Margin="0,1">
                                   <TextBlock Text="角度" VerticalAlignment="Center" Margin="10,0"/>
-                                  <Slider x:Name="sldKaiten" Minimum="0" Maximum="360"/>
+                                  <Slider x:Name="sldKaiten" Minimum="0" Maximum="360" Value="{Binding Angle}"/>
                                 </DockPanel>
                                 <WrapPanel>
-                                  <TextBox x:Name="tbKaiten" Text="{Binding Value, ElementName=sldKaiten, StringFormat=000.00}"/>
+                                  <TextBox x:Name="tbKaiten" Text="{Binding Value, ElementName=sldKaiten, StringFormat=000.00}" RenderTransformOrigin="0.5,0.5"/>
                                   <Button x:Name="btAngle0" Content="上" Tag="0" Margin="1,0,0,0" Style="{StaticResource btstyle}"/>
                                   <Button x:Name="btAngle90" Content="右" Tag="90" Margin="1,0,0,0" Style="{StaticResource btstyle}"/>
                                   <Button x:Name="btAngle180" Content="下" Tag="180" Margin="1,0,0,0" Style="{StaticResource btstyle}"/>
@@ -447,7 +466,8 @@ http://www.atmarkit.co.jp/ait/articles/1602/17/news034.html-->
                               <StackPanel>
 
 
-                                <CheckBox x:Name="cbTateyokoSync" Content="縦横同期" IsChecked="True" Margin="10,10,0,0"/>
+                                <CheckBox x:Name="cbTateyokoSync" Content="縦横同期" Margin="10,10,0,0"
+                                          IsChecked="{Binding ScaleSync}"/>
                                 <GroupBox Header="比率で指定" Background="Honeydew">
                                   <StackPanel>
                                     <WrapPanel Margin="0,2">
@@ -462,7 +482,8 @@ http://www.atmarkit.co.jp/ait/articles/1602/17/news034.html-->
                                     <DockPanel>
                                       <TextBox Text="{Binding Value, ElementName=sldScaleX, StringFormat=#0.000}" MouseWheel="TextBox_MouseWheel"
                              Tag="{Binding ElementName=sldScaleX}"/>
-                                      <Slider x:Name="sldScaleX" Minimum="-3" Maximum="3" Value="1" LargeChange="0.1" TickFrequency="0.01" SmallChange="0.01" IsSnapToTickEnabled="True"/>
+                                      <Slider x:Name="sldScaleX" Minimum="-3" Maximum="3" LargeChange="0.1" TickFrequency="0.01"
+                                              SmallChange="0.01" IsSnapToTickEnabled="True" Value="{Binding ScaleX}"/>
                                     </DockPanel>
                                     <WrapPanel Margin="0,2">
                                       <TextBlock Text="拡大率縦" VerticalAlignment="Center" Margin="0,0"/>
@@ -474,7 +495,8 @@ http://www.atmarkit.co.jp/ait/articles/1602/17/news034.html-->
                                     <DockPanel>
                                       <TextBox Text="{Binding Value, ElementName=sldScaleY, StringFormat=#0.000}"
                       MouseWheel="TextBox_MouseWheel" Tag="{Binding ElementName=sldScaleY}"/>
-                                      <Slider x:Name="sldScaleY" Minimum="-3" Maximum="3" Value="1" LargeChange="0.1" TickFrequency="0.01" SmallChange="0.01" IsSnapToTickEnabled="True"/>
+                                      <Slider x:Name="sldScaleY" Minimum="-3" Maximum="3" LargeChange="0.1" TickFrequency="0.01"
+                                              SmallChange="0.01" IsSnapToTickEnabled="True" Value="{Binding ScaleY}"/>
 
                                     </DockPanel>
                                   </StackPanel>
@@ -505,14 +527,14 @@ http://www.atmarkit.co.jp/ait/articles/1602/17/news034.html-->
                                 <DockPanel>
                                   <local:NumericUpDown x:Name="numeSkewY" Value="{Binding Value, ElementName=sldSkewY, Mode=TwoWay}"
                                                   Frequency="0.1" Width="60" Digits="1" Maximum="89" Minimum="-89"/>
-                                  <Slider x:Name="sldSkewY" Minimum="-89" Maximum="89" Value="0" LargeChange="1" TickFrequency="0.1" SmallChange="0.1"
-                    IsSnapToTickEnabled="True"/>
+                                  <Slider x:Name="sldSkewY" Minimum="-89" Maximum="89" LargeChange="1" TickFrequency="0.1" SmallChange="0.1"
+                    IsSnapToTickEnabled="True" Value="{Binding SkewX}"/>
                                 </DockPanel>
                                 <DockPanel>
                                   <local:NumericUpDown x:Name="numeSkewX" Value="{Binding Value, ElementName=sldSkewX, Mode=TwoWay}"
                                                   Frequency="0.1" Width="60" Digits="1" Maximum="89" Minimum="-89"/>
-                                  <Slider x:Name="sldSkewX" Minimum="-89" Maximum="89" Value="0" LargeChange="1" TickFrequency="1" SmallChange="0.1"
-                    IsSnapToTickEnabled="True"/>
+                                  <Slider x:Name="sldSkewX" Minimum="-89" Maximum="89" LargeChange="1" TickFrequency="1" SmallChange="0.1"
+                    IsSnapToTickEnabled="True" Value="{Binding SkewY}"/>
                                 </DockPanel>
                               </StackPanel>
                             </GroupBox>
