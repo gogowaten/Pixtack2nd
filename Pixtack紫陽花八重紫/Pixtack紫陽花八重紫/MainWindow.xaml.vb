@@ -4,6 +4,7 @@ Imports System.Windows.Controls.Panel
 Imports System.Windows.Controls.Canvas
 Imports System.ComponentModel
 Imports System.IO.Compression
+Imports System.Runtime.Serialization
 
 Class MainWindow
     'すべてのExThumbを入れておくリストコレスション
@@ -117,7 +118,7 @@ Class MainWindow
         Dim p As Point = GetRect(ex).Location '変形位置取得、今表示している形の位置
         'Dim p As Point = ex.LocationInside '変形位置取得、
 
-        Dim g As Integer = gridSdr.Value '指定グリッド数値取得
+        Dim g As Integer = sldGrid.Value '指定グリッド数値取得
 
         'ズレの取得、今表示している形の位置がグリッドからどれだけずれているか
         Dim xm As Double = p.X Mod g '横位置をグリッドで割った余り
@@ -159,7 +160,7 @@ Class MainWindow
 
     'マウスドラッグ移動、グリッドに合わせた移動
     Private Sub ExThumb_DragDelta(sender As Object, e As DragDeltaEventArgs)
-        Dim g As Integer = gridSdr.Value
+        Dim g As Integer = sldGrid.Value
         Dim ex As ExThumb = DirectCast(sender, ExThumb)
         '元の形の位置取得、
         'これは左クリックダウンイベントの時にAdjustGridメソッドでグリッドに合わせた位置になっているはずなので
@@ -369,7 +370,8 @@ Class MainWindow
     Private Sub AddExThumb(listPath As List(Of String), newLocate As Point)
         'ファイルパスの数だけExThumb作成して表示
         For i As Integer = 0 To listPath.Count - 1
-            Dim sd As New SaveData With {.Angle = 0, .ScaleSync = True, .ScaleX = 1, .ScaleY = 1, .SkewX = 0, .SkewY = 0}
+            Dim sd As New SaveData With {.Angle = 0, .ScaleSync = True, .ScaleX = 1, .ScaleY = 1, .SkewX = 0, .SkewY = 0,
+                .Locate = newLocate}
             'ファイルパスから画像を取得
             Dim bmp As BitmapSource = GetBitmapImage(listPath(i))
             If bmp IsNot Nothing Then
@@ -377,6 +379,8 @@ Class MainWindow
                 Dim ex As ExThumb = SetBitmapSource(bmp, newLocate, sd)
                 '次のExThumbのLocate取得
                 newLocate = GetSlideLocation2(ex.LocationInside)
+                'sd.Locate = GetSlideLocation2(ex.LocationInside)
+
 
                 ''コレクションに追加してCanvasに表示
                 'Dim ex As ExThumb = SetOCollectionExThumb()
@@ -457,6 +461,10 @@ Class MainWindow
 
         'Dim sd As New SaveData With {.Angle = 0, .ScaleX = 1, .ScaleY = 1, .SkewX = 0, .SkewY = 0, .ScaleSync = True}
         ex.DataContext = sd
+        Dim bind As New Binding("Locate")
+        bind.Mode = BindingMode.TwoWay
+
+        ex.SetBinding(ExThumb.LocationInsideProperty, bind)
         spTransform.DataContext = sd ' ex.DataContext
         Call SetBindingTransform(img)
 
@@ -476,9 +484,7 @@ Class MainWindow
         FocusExThumb = ex '要る？→要る、画像追加時のCollectionに挿入するときに使う
         Return ex
     End Function
-    Private Sub test(img As ExImage, ex As ExThumb)
 
-    End Sub
     Private Sub SetBindingTransform(img As ExImage)
         'ExImageのRenderTransformのTransformGroupの中から各Transformを取得する
         Dim ro As RotateTransform = GetTransform(img, GetType(RotateTransform))
@@ -491,7 +497,6 @@ Class MainWindow
         Call SubSetBinding(img, "ScaleY", sc, ScaleTransform.ScaleYProperty)
         Call SubSetBinding(img, "SkewX", sk, SkewTransform.AngleXProperty)
         Call SubSetBinding(img, "SkewY", sk, SkewTransform.AngleYProperty)
-
 
     End Sub
     Private Sub SubSetBinding(img As ExImage, p As String, deob As DependencyObject, dep As DependencyProperty)
@@ -832,38 +837,116 @@ Class MainWindow
         Next
         Dim bm As New BitmapMetadata("tiff")
 
+
+        '保存するSaveDataを集める
         Dim saveDataList As List(Of SaveData) = GetSaveDataAll()
 
         Dim fd As New Microsoft.Win32.SaveFileDialog
-        fd.DefaultExt = ".zip"
-        fd.Filter = "*.zip|*.zip"
+        fd.DefaultExt = ".pa2" ' ".zip"
+        fd.Filter = "*.pa2(Pixtack紫陽花2nd)|*.pa2" ' "*.zip|*.zip"
         fd.AddExtension = True
-        If fd.ShowDialog Then
-            Using zipStream As Stream = File.Create(fd.FileName)
-                Using archive As New ZipArchive(zipStream, ZipArchiveMode.Create)
-                    Dim entry As ZipArchiveEntry = archive.CreateEntry("data.bin", CompressionLevel.Fastest)
-                    Using entryStream As Stream = entry.Open
-                        Dim bf As New Runtime.Serialization.Formatters.Binary.BinaryFormatter
-                        bf.Serialize(entryStream, saveDataList)
-                    End Using
+        ''バイナリ形式
+        'If fd.ShowDialog Then
+        '    Using zipStream As Stream = File.Create(fd.FileName)
+        '        Using archive As New ZipArchive(zipStream, ZipArchiveMode.Create)
+        '            Dim entry As ZipArchiveEntry = archive.CreateEntry("data.bin", CompressionLevel.Fastest)
+        '            Using entryStream As Stream = entry.Open
+        '                Dim bf As New Runtime.Serialization.Formatters.Binary.BinaryFormatter
+        '                bf.Serialize(entryStream, saveDataList)
+        '            End Using
 
-                    entry = archive.CreateEntry("bitmap.tiff", CompressionLevel.Fastest)
-                    Using entryStream As Stream = entry.Open
-                        Using ms As New MemoryStream
-                            encoder.Save(ms)
-                            ms.Position = 0
-                            ms.CopyTo(entryStream)
+        '            entry = archive.CreateEntry("bitmap.tiff", CompressionLevel.Fastest)
+        '            Using entryStream As Stream = entry.Open
+        '                Using ms As New MemoryStream
+        '                    encoder.Save(ms)
+        '                    ms.Position = 0
+        '                    ms.CopyTo(entryStream)
+        '                End Using
+        '            End Using
+        '        End Using
+        '    End Using
+        'End If
+
+
+        'XmlSerializerを使う方法
+        'Object配列やArrayListをXMLシリアル化する: .NET Tips: C#, VB.NET
+        'http://dobon.net/vb/dotnet/file/xmlserializer2.html
+
+        'Dim et As Type() = New Type() {GetType(SaveData)} 'よくわからん
+        'Dim serializer As New Xml.Serialization.XmlSerializer(GetType(List(Of SaveData)), et)
+        'If fd.ShowDialog Then
+        '    Using zipStream As Stream = File.Create(fd.FileName)
+        '        Using archive As New ZipArchive(zipStream, ZipArchiveMode.Create)
+        '            Dim entry As ZipArchiveEntry = archive.CreateEntry("data.xml", CompressionLevel.Fastest)
+        '            Using entryStream As Stream = entry.Open
+        '                Using writer As New StreamWriter(entryStream, New Text.UTF8Encoding(False))
+        '                    serializer.Serialize(writer, saveDataList)
+        '                End Using
+        '            End Using
+
+        '            entry = archive.CreateEntry("bitmap.tiff", CompressionLevel.Fastest)
+        '            Using entryStream As Stream = entry.Open
+        '                Using ms As New MemoryStream
+        '                    encoder.Save(ms)
+        '                    ms.Position = 0
+        '                    ms.CopyTo(entryStream)
+        '                End Using
+        '            End Using
+        '        End Using
+        '    End Using
+        'End If
+
+
+        'DataContractSerializerを使った方法
+        'System.Runtime.Serialization.dllへの参照が必要
+        Dim et As Type() = New Type() {GetType(SaveData)}
+        Dim serializer As New Runtime.Serialization.DataContractSerializer(GetType(List(Of SaveData)), et)
+
+        'Dim settings As New XmlDataProvider
+        Dim settings As New Xml.XmlWriterSettings
+        settings.Encoding = New Text.UTF8Encoding(False)
+
+        If fd.ShowDialog Then
+            Try 'SaveDataの保存
+                Using zipStream As Stream = File.Create(fd.FileName)
+                    Using archive As New ZipArchive(zipStream, ZipArchiveMode.Create)
+                        Dim entry As ZipArchiveEntry = archive.CreateEntry("data.xml", CompressionLevel.Fastest)
+                        Using entryStream As Stream = entry.Open
+                            Using xw As Xml.XmlWriter = Xml.XmlWriter.Create(entryStream, settings)
+                                serializer.WriteObject(xw, saveDataList)
+                            End Using
+
+                        End Using
+                        '画像の保存
+                        entry = archive.CreateEntry("bitmap.tiff", CompressionLevel.Fastest)
+                        Using entryStream As Stream = entry.Open
+                            Using ms As New MemoryStream
+                                encoder.Save(ms)
+                                ms.Position = 0
+                                ms.CopyTo(entryStream)
+                            End Using
+                            'encoder.Save(entryStream)'これはエラーになる
                         End Using
                     End Using
                 End Using
-            End Using
+            Catch ex As Exception
+                Dim str As String = "保存できませんでした" & Environment.NewLine
+                MsgBox(str & ex.Message)
+            End Try
         End If
+
     End Sub
-    'セーブするDataContext一覧を返す
+    'セーブするDataContext一覧リストを返す
     Private Function GetSaveDataAll() As List(Of SaveData)
         Dim sdList As New List(Of SaveData)
         For i As Integer = 0 To OCollectionExThumb.Count - 1
-            sdList.Add(OCollectionExThumb(i).DataContext)
+            'SaveDataに位置情報を追加する
+            Dim ex As ExThumb = OCollectionExThumb(i)
+            Dim sd As SaveData = ex.DataContext
+            sd.Left = GetLeft(ex)
+            sd.Top = GetTop(ex)
+            '一覧リストに追加
+            sdList.Add(sd)
         Next
         Return sdList
     End Function
@@ -877,39 +960,88 @@ Class MainWindow
     End Function
     'セーブファイルの読み込み
     Private Sub LoadFile()
+        'Dim DataList As New List(Of SaveData)
+        'Dim BitmapList As New List(Of BitmapSource)
+        'Dim fd As New Microsoft.Win32.OpenFileDialog
+        'fd.Filter = "*.zip|*.zip"
+        'If fd.ShowDialog Then
+        '    Using zipStream As Stream = File.OpenRead(fd.FileName)
+        '        Using archive As New ZipArchive(zipStream, ZipArchiveMode.Read)
+        '            '画像以外のデータの読み込み
+        '            Dim entry As ZipArchiveEntry = archive.GetEntry("data.bin")
+        '            Using entryStream As Stream = entry.Open
+        '                Dim bf As New Runtime.Serialization.Formatters.Binary.BinaryFormatter
+        '                DataList = bf.Deserialize(entryStream)
+        '            End Using
+
+        '            '画像の読み込み
+        '            entry = archive.GetEntry("bitmap.tiff")
+        '            Using entryStream As Stream = entry.Open
+        '                Dim decoder As New TiffBitmapDecoder(entryStream, BitmapCreateOptions.None, BitmapCacheOption.OnLoad)
+        '                'BitmapList.Clear()
+        '                BitmapList.AddRange(decoder.Frames)
+        '            End Using
+        '        End Using
+        '    End Using
+
+        'End If
+
+        ''読み込んだデータを元にExThumbをCanvasに追加
+        'Dim newLocate As Point = GetNewLocation()
+        'Dim ex As ExThumb
+        'For i As Integer = 0 To BitmapList.Count - 1
+        '    ex = SetBitmapSource(BitmapList(i), New Point(DataList(i).Left, DataList(i).Top), DataList(i))
+        '    newLocate = GetSlideLocation2(ex.LocationInside)
+
+        '    'ex = SetBitmapSource(BitmapList(i), DataList(i).Locate, DataList(i))
+        'Next
+
+
+        'DataContractSerializerを使った場合
+        Dim et As Type() = New Type() {GetType(SaveData)}
+        Dim serializer As New DataContractSerializer(GetType(List(Of SaveData)), et)
+
         Dim DataList As New List(Of SaveData)
         Dim BitmapList As New List(Of BitmapSource)
         Dim fd As New Microsoft.Win32.OpenFileDialog
-        fd.Filter = "*.zip|*.zip"
+        fd.Filter = "*.pa2(Pixtack紫陽花2nd)|*pa2" ' "*.zip|*.zip"
         If fd.ShowDialog Then
-            Using zipStream As Stream = File.OpenRead(fd.FileName)
-                Using archive As New ZipArchive(zipStream, ZipArchiveMode.Read)
-                    '画像以外のデータの読み込み
-                    Dim entry As ZipArchiveEntry = archive.GetEntry("data.bin")
-                    Using entryStream As Stream = entry.Open
-                        Dim bf As New Runtime.Serialization.Formatters.Binary.BinaryFormatter
-                        DataList = bf.Deserialize(entryStream)
-                    End Using
+            Try
+                Using zipStream As Stream = File.OpenRead(fd.FileName)
+                    Using archive As New ZipArchive(zipStream, ZipArchiveMode.Read)
+                        '画像以外のデータの読み込み
+                        Dim entry As ZipArchiveEntry = archive.GetEntry("data.xml")
+                        Using entryStream As Stream = entry.Open
+                            Using xr As Xml.XmlReader = Xml.XmlReader.Create(entryStream)
+                                DataList = DirectCast(serializer.ReadObject(xr), List(Of SaveData))
+                            End Using
+                        End Using
 
-                    '画像の読み込み
-                    entry = archive.GetEntry("bitmap.tiff")
-                    Using entryStream As Stream = entry.Open
-                        Dim decoder As New TiffBitmapDecoder(entryStream, BitmapCreateOptions.None, BitmapCacheOption.OnLoad)
-                        'BitmapList.Clear()
-                        BitmapList.AddRange(decoder.Frames)
+                        '画像の読み込み
+                        entry = archive.GetEntry("bitmap.tiff")
+                        Using entryStream As Stream = entry.Open
+                            Dim decoder As New TiffBitmapDecoder(entryStream, BitmapCreateOptions.None, BitmapCacheOption.OnLoad)
+                            'BitmapList.Clear()
+                            BitmapList.AddRange(decoder.Frames)
+                        End Using
                     End Using
                 End Using
-            End Using
+
+            Catch ex As Exception
+                Dim str As String = "ファイルの読み込みに失敗しました" & Environment.NewLine
+                MsgBox(str & ex.Message)
+                Return
+            End Try
 
         End If
 
         '読み込んだデータを元にExThumbをCanvasに追加
         Dim newLocate As Point = GetNewLocation()
-        Dim ex As ExThumb
+        Dim ext As ExThumb
         For i As Integer = 0 To BitmapList.Count - 1
-            ex = SetBitmapSource(BitmapList(i), newLocate, DataList(i))
-            newLocate = GetSlideLocation2(ex.LocationInside)
+            ext = SetBitmapSource(BitmapList(i), DataList(i).Locate, DataList(i))
         Next
+
     End Sub
 
 
@@ -998,17 +1130,12 @@ Class MainWindow
 
     '設定のリセット
     Private Sub Button_Click_1(sender As Object, e As RoutedEventArgs)
-        Dim neko = FocusExThumb.TemplateImage.RenderTransform.GetValue(RotateTransform.AngleProperty)
-        Dim ore As SaveData = FocusExThumb.TemplateImage.DataContext
-        'FocusExThumb.SetBinding(TopProperty, New Binding("Left"))
-        'FocusExThumb.SetBinding(LeftProperty, New Binding("Top"))
 
-        FocusExThumb.SetBinding(ExThumb.LocatePropertyX, New Binding("Left"))
-        FocusExThumb.SetBinding(ExThumb.LocatePropertyY, New Binding("Top"))
-        FocusExThumb.LocateX = 100
 
-        Dim sd As SaveData = FocusExThumb.DataContext
-        sd.Left = 30
+
+        'Dim neko = FocusExThumb.TemplateImage.RenderTransform.GetValue(RotateTransform.AngleProperty)
+        'Dim ore As SaveData = FocusExThumb.TemplateImage.DataContext
+
 
         'ore.Angle = 30
         'Left = Settings1.Default.MainWindow_Left
@@ -1152,18 +1279,18 @@ Class MainWindow
 
     '画像追加時のスライド量
     Private Sub sliX_ValueChanged(sender As Object, e As RoutedPropertyChangedEventArgs(Of Double)) ' Handles sliX.ValueChanged
-        tbSliX.Text = $"{e.NewValue * gridSdr.Value:000}"
+        tbSliX.Text = $"{e.NewValue * sldGrid.Value:000}"
     End Sub
 
     Private Sub sliY_ValueChanged(sender As Object, e As RoutedPropertyChangedEventArgs(Of Double)) 'Handles sliY.ValueChanged
-        tbSliY.Text = $"{e.NewValue * gridSdr.Value:000}"
+        tbSliY.Text = $"{e.NewValue * sldGrid.Value:000}"
     End Sub
 
     Private Sub MainWindow_Loaded(sender As Object, e As RoutedEventArgs) Handles Me.Loaded
         '画像追加時のスライド量のスライダーのValueChangedイベントに付加
         AddHandler sliX.ValueChanged, AddressOf sliX_ValueChanged
         AddHandler sliY.ValueChanged, AddressOf sliY_ValueChanged
-        AddHandler gridSdr.ValueChanged, AddressOf gridSdr_ValueChanged
+        AddHandler sldGrid.ValueChanged, AddressOf gridSdr_ValueChanged
 
         '上のイベントを実行してスライド量の表示更新
         sliX_ValueChanged(sliX, New RoutedPropertyChangedEventArgs(Of Double)(0, sliX.Value))
@@ -1177,7 +1304,7 @@ Class MainWindow
         'スライダーのマウスホイールイベントに
         AddHandler sliX.MouseWheel, AddressOf sliX_MouseWheel
         AddHandler sliY.MouseWheel, AddressOf sliX_MouseWheel
-        AddHandler gridSdr.MouseWheel, AddressOf sliX_MouseWheel
+        AddHandler sldGrid.MouseWheel, AddressOf sliX_MouseWheel
 
 
     End Sub
@@ -1525,7 +1652,7 @@ Class MainWindow
     End Sub
 
     'マウスの下にある画像から色取得して取得中の色を表示
-    Public Sub GetColor(x As Integer, y As Integer, bs As BitmapSource)
+    Public Function GetPixleColor(x As Integer, y As Integer, bs As BitmapSource) As Color
         'クリックされた位置の1ｘ1の画像を切り取り作成
         Dim cb As New CroppedBitmap(bs, New Int32Rect(x, y, 1, 1))
         'ストライドがよくわからないから決め打ちするためにBgra32に変換
@@ -1537,18 +1664,28 @@ Class MainWindow
         Dim r As Integer = pixels(2)
         Dim a As Integer = pixels(3)
         Dim c As Color = Color.FromArgb(a, r, g, b)
+        Return c
+
+    End Function
+
+    '透明にする色をRectに表示
+    Public Sub SetColorForRect(c As Color)
+        Dim a, r, g, b As Integer
+        a = c.A : r = c.R : g = c.G : b = c.B
+
         '取得した色でブラシ作成して表示
         Dim scb As New SolidColorBrush(c)
         rectGetingColor.Fill = scb
         rectGetingColor.Tag = c 'TagにColorを入れておく
         tbGetingColr.Text = $"ARGB={a},{r},{g},{b}"
 
-
+        '表示文字の色、背景色が明るければ文字は黒
         If r + g + b > 400 Then
             tbGetingColr.Foreground = Brushes.Black
         Else
             tbGetingColr.Foreground = Brushes.White
         End If
+
     End Sub
     '選択色を透明にする
     Private Sub btSetTransparent_Click(sender As Object, e As RoutedEventArgs) Handles btSetTransparent.Click
@@ -1609,32 +1746,70 @@ Class MainWindow
     End Sub
 
     Private Sub canvas1_PreviewMouseMove(sender As Object, e As MouseEventArgs)
+        ''画像から色取得
+        ''Canvas全体画像を作成、クリックした場所の色を取得
+        'Dim p As Point = e.GetPosition(canvas1) 'クリック位置
+        'Dim r As Rect = GetUnion() 'Canvas全体のRect取得
+        'Dim w As Integer = r.Width
+        'Dim h As Integer = r.Height
+        ''描画先を作成
+        'Dim dv As New DrawingVisual
+        'Using dc As DrawingContext = dv.RenderOpen
+        '    Dim vb As New VisualBrush(canvas1) 'Canvas内に表示されているもの自体を使ってVisualBrush作成
+        '    dc.DrawRectangle(vb, Nothing, r) '四角形にブラシで塗り、サイズそのまま
+        'End Using
+
+        ''描画、切り上げザイズの範囲に、そのままの大きさで描画
+        ''PixelFormatはPbgra32以外だとエラー？Bgra32はエラーになる
+        'Dim rtb As New RenderTargetBitmap(w, h, 96, 96, PixelFormats.Pbgra32)
+        'rtb.Render(dv)
+
+        ''画像の端のときにたまに大きな値が返ってくるので-1している
+        'Dim x As Integer = p.X
+        'Dim y As Integer = p.Y
+        'If x >= w Then x = w - 1
+        'If y >= h Then y = h - 1
+
+        ''色を取得して表示
+        'Call GetColor(x, y, rtb)
+
+        '↑負荷が高い
+        '------------------------------------------------------
+        '↓低負荷
         '画像から色取得
-        'Canvas全体画像を作成、クリックした場所の色を取得
+        '個別の画像を取得してそこから、クリックした場所の色を取得
         Dim p As Point = e.GetPosition(canvas1) 'クリック位置
-        Dim r As Rect = GetUnion() 'Canvas全体のRect取得
-        Dim w As Integer = r.Width
-        Dim h As Integer = r.Height
-        '描画先を作成
-        Dim dv As New DrawingVisual
-        Using dc As DrawingContext = dv.RenderOpen
-            Dim vb As New VisualBrush(canvas1) 'Canvas内に表示されているもの自体を使ってVisualBrush作成
-            dc.DrawRectangle(vb, Nothing, r) '四角形にブラシで塗り、サイズそのまま
-        End Using
+        'マウスの下にあるDependencyObjectをcanvas1の中から取得
+        Dim hitResult As HitTestResult = VisualTreeHelper.HitTest(canvas1, p)
+        Dim Obj As DependencyObject = hitResult.VisualHit
+        'canvas1なら透明色を指定して終了
+        If Obj.GetType <> GetType(ExImage) Then
+            Call SetColorForRect(Colors.Transparent)
+            Return
+        End If
 
-        '描画、切り上げザイズの範囲に、そのままの大きさで描画
-        'PixelFormatはPbgra32以外だとエラー？Bgra32はエラーになる
-        Dim rtb As New RenderTargetBitmap(w, h, 96, 96, PixelFormats.Pbgra32)
-        rtb.Render(dv)
+        'canvas1じゃなければExImageのはずなので取得
+        'Dim ex As ExThumb = DirectCast(hitResult.VisualHit, ExThumb) 'これはエラーになる
+        Dim img As ExImage = DirectCast(hitResult.VisualHit, ExImage)
+        'Dim tmb As ExThumb = img.TemplatedParent
 
-        '画像の端のときにたまに大きな値が返ってくるので-1している
-        Dim x As Integer = p.X
-        Dim y As Integer = p.Y
-        If x >= w Then x = w - 1
-        If y >= h Then y = h - 1
+        'Canvasのマウス座標をExImageのマウス座標に変換
+        Dim tf As GeneralTransform = canvas1.TransformToDescendant(img)
+        Dim p2 As Point = tf.Transform(p)
 
-        '色を取得して表示
-        Call GetColor(x, y, rtb)
+        '取得した座標が画像より大きければ-1する、理由は
+        '例えば100x100ピクセルの画像の時に取得される座標は0,0から100,100までの範囲だけど
+        'ピクセルは0,0から99,99なので、もし座標が最大値の100の場合にエラーになる
+        Dim x As Integer = p2.X
+        Dim y As Integer = p2.Y
+        Dim sou As BitmapSource = img.Source
+        If x >= sou.PixelWidth Then x = sou.PixelWidth - 1
+        If y >= sou.PixelHeight Then y = sou.PixelHeight - 1
+
+        '座標のピクセルの色取得
+        Dim col As Color = GetPixleColor(x, y, sou)
+        'Rectに色と文字表示
+        Call SetColorForRect(col)
 
     End Sub
 
@@ -1659,7 +1834,7 @@ Class MainWindow
         If FocusExThumb Is Nothing Then Return
 
         Call AdjustGrid(FocusExThumb)
-        Dim g As Integer = gridSdr.Value
+        Dim g As Integer = sldGrid.Value
         Dim p As Point = FocusExThumb.LocationInside
         Select Case k
             Case Key.Up
@@ -1813,73 +1988,129 @@ Class MainWindow
 
 End Class
 
-'<Serializable>
-'Public Class SaveData
-'    Implements INotifyPropertyChanged
-'    <NonSerialized>
-'    Public Event PropertyChanged As PropertyChangedEventHandler Implements INotifyPropertyChanged.PropertyChanged
-'    Private Sub OnPropertyChanged(propertyName As String)
-'        RaiseEvent PropertyChanged(Me, New PropertyChangedEventArgs(propertyName))
-'    End Sub
 
-'    '回転角度
-'    Private Property _Angle As Double
-'    Public Property Angle As Double
-'        Get
-'            Return _Angle
-'        End Get
-'        Set(value As Double)
-'            _Angle = value
-'            Call OnPropertyChanged("Angle")
-'        End Set
-'    End Property
+<Serializable>
+<DataContract>
+Public Class SaveData
+    Implements INotifyPropertyChanged
+    <NonSerialized>
+    Public Event PropertyChanged As PropertyChangedEventHandler Implements INotifyPropertyChanged.PropertyChanged
+    Private Sub OnPropertyChanged(propertyName As String)
+        RaiseEvent PropertyChanged(Me, New PropertyChangedEventArgs(propertyName))
+    End Sub
 
-'    '拡大率横
-'    Private Property _ScaleX As Double
-'    Public Property ScaleX As Double
-'        Get
-'            Return _ScaleX
-'        End Get
-'        Set(value As Double)
-'            _ScaleX = value
-'            Call OnPropertyChanged("ScaleX")
-'        End Set
-'    End Property
+    Private IsChangeX As Boolean = False '縦横同期の時のループ防止用
+    Private IsChangeY As Boolean = False
 
-'    '拡大率縦
-'    Private Property _ScaleY As Double
-'    Public Property ScaleY As Double
-'        Get
-'            Return _ScaleY
-'        End Get
-'        Set(value As Double)
-'            _ScaleY = value
-'            Call OnPropertyChanged("ScaleY")
-'        End Set
-'    End Property
+    '回転角度
+    <DataMember>
+    Private Property _Angle As Double
+    Public Property Angle As Double
+        Get
+            Return _Angle
+        End Get
+        Set(value As Double)
+            _Angle = value
+            Call OnPropertyChanged("Angle")
+        End Set
+    End Property
 
-'    '傾斜横
-'    Private Property _SkewX As Double
-'    Public Property SkewX As Double
-'        Get
-'            Return _SkewX
-'        End Get
-'        Set(value As Double)
-'            _SkewX = value
-'            Call OnPropertyChanged("SkewX")
-'        End Set
-'    End Property
+    '拡大率横
+    <DataMember>
+    Private Property _ScaleX As Double
+    Public Property ScaleX As Double
+        Get
+            Return _ScaleX
+        End Get
+        Set(value As Double)
+            IsChangeX = True '変更中開始
+            _ScaleX = value
+            Call OnPropertyChanged("ScaleX")
+            If ScaleSync And IsChangeY = False Then '縦横同期ならYも変更
+                ScaleY = value
+            End If
+            IsChangeX = False '変更中終了
+        End Set
+    End Property
 
-'    '傾斜縦
-'    Private Property _SkewY As Double
-'    Public Property SkewY As Double
-'        Get
-'            Return _SkewY
-'        End Get
-'        Set(value As Double)
-'            _SkewY = value
-'            Call OnPropertyChanged("SkewY")
-'        End Set
-'    End Property
+    '拡大率縦
+    <DataMember>
+    Private Property _ScaleY As Double
+    Public Property ScaleY As Double
+        Get
+            Return _ScaleY
+        End Get
+        Set(value As Double)
+            IsChangeY = True
+            _ScaleY = value
+            Call OnPropertyChanged("ScaleY")
+            If ScaleSync And IsChangeX = False Then
+                ScaleX = value
+            End If
+            IsChangeY = False
+        End Set
+    End Property
 
-'End Class
+    '拡大率縦横同期
+    <DataMember> Private Property _ScaleSync As Boolean
+    Public Property ScaleSync As Boolean
+        Get
+            Return _ScaleSync
+        End Get
+        Set(value As Boolean)
+            _ScaleSync = value
+            Call OnPropertyChanged("ScaleSync")
+        End Set
+    End Property
+
+    '傾斜横
+    <DataMember> Private Property _SkewX As Double
+    Public Property SkewX As Double
+        Get
+            Return _SkewX
+        End Get
+        Set(value As Double)
+            _SkewX = value
+            Call OnPropertyChanged("SkewX")
+        End Set
+    End Property
+
+    '傾斜縦
+    <DataMember> Private Property _SkewY As Double
+    Public Property SkewY As Double
+        Get
+            Return _SkewY
+        End Get
+        Set(value As Double)
+            _SkewY = value
+            Call OnPropertyChanged("SkewY")
+        End Set
+    End Property
+
+    Public Property Left As Double
+    Public Property Top As Double
+
+    <DataMember>
+    Private Property _Locate As Point
+    Public Property Locate As Point
+        Get
+            Return _Locate
+        End Get
+        Set(value As Point)
+            _Locate = value
+        End Set
+    End Property
+
+    'デシリアライズ時に実行される
+    '空のPropertyがあったら初期設定する
+    <OnDeserializing>
+    Public Sub def初期値設定(context As StreamingContext)
+        Me.Angle = 0
+        Me.ScaleSync = True
+        Me.ScaleX = 1
+        Me.ScaleY = 1
+        Me.SkewX = 0
+        Me.SkewY = 0
+
+    End Sub
+End Class

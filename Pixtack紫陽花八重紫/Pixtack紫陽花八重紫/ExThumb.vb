@@ -25,53 +25,75 @@ Public Class ExThumb
     '座標、親コンテナのCanvasに対する自身の左上の座標
     'Canvas.GetLeft,Canvas.GetTopで得られる値
     '内部座標(Canvasにセットする方)
-    Private _LocationInside As Point
+    'Private _LocationInside As Point
+    'Public Property LocationInside As Point
+    '    Get
+    '        Return _LocationInside
+    '    End Get
+    '    Set(value As Point)
+    '        _LocationInside = value
+    '        '値が変更されたら、表示位置も変更してステータスバーの表示も更新
+    '        SetLeft(Me, value.X)
+    '        SetTop(Me, value.Y)
+
+    '        '再描画！！！！
+    '        Main.ReRender(Me)
+    '        'Main.StatusBarDisplayUpdate(Me)
+    '        Main.RefreshStatusBarLocate(Me)
+    '    End Set
+    'End Property
+
+    'Public Shared ReadOnly Property LocatePropertyX As DependencyProperty =
+    '    DependencyProperty.Register("LocateX", GetType(Double), GetType(ExThumb), New PropertyMetadata(0R))
+    'Public Property LocateX As Double
+    '    Get
+    '        Return GetValue(LocatePropertyX)
+    '    End Get
+    '    Set(value As Double)
+    '        SetValue(LocatePropertyX, value)
+    '        SetLeft(Me, value)
+    '        SetTop(Me, LocateY)
+
+    '    End Set
+    'End Property
+
+    'Public Shared ReadOnly Property LocatePropertyY As DependencyProperty =
+    '    DependencyProperty.Register("LocateY", GetType(Double), GetType(ExThumb), New PropertyMetadata(0R))
+    'Public Property LocateY As Double
+    '    Get
+    '        Return GetValue(LocatePropertyY)
+    '    End Get
+    '    Set(value As Double)
+    '        SetValue(LocatePropertyY, value)
+    '        SetLeft(Me, LocateX)
+    '        SetTop(Me, value)
+    '    End Set
+    'End Property
+
+    Public Shared ReadOnly Property LocationInsideProperty As DependencyProperty =
+        DependencyProperty.Register("Locate", GetType(Point), GetType(ExThumb), New PropertyMetadata(New Point(0, 0)))
     Public Property LocationInside As Point
         Get
-            Return _LocationInside
+            Return GetValue(LocationInsideProperty)
         End Get
         Set(value As Point)
-            _LocationInside = value
-            '値が変更されたら、表示位置も変更してステータスバーの表示も更新
-            'SetLeft(Me, value.X)
-            'SetTop(Me, value.Y)
-            LocateX = value.X
-            LocateY = value.Y
+            SetValue(LocationInsideProperty, value)
+            SetLeft(Me, value.X)
+            SetTop(Me, value.Y)
             '再描画！！！！
             Main.ReRender(Me)
             'Main.StatusBarDisplayUpdate(Me)
             Main.RefreshStatusBarLocate(Me)
+            'lx = value.X
+            'ly = value.Y
         End Set
     End Property
 
-    Public Shared ReadOnly Property LocatePropertyX As DependencyProperty =
-        DependencyProperty.Register("LocateX", GetType(Double), GetType(ExThumb), New PropertyMetadata(0R))
-    Public Property LocateX As Double
-        Get
-            Return GetValue(LocatePropertyX)
-        End Get
-        Set(value As Double)
-            SetValue(LocatePropertyX, value)
-            SetLeft(Me, value)
-            SetTop(Me, LocateY)
-        End Set
-    End Property
-
-    Public Shared ReadOnly Property LocatePropertyY As DependencyProperty =
-        DependencyProperty.Register("LocateY", GetType(Double), GetType(ExThumb), New PropertyMetadata(0R))
-    Public Property LocateY As Double
-        Get
-            Return GetValue(LocatePropertyY)
-        End Get
-        Set(value As Double)
-            SetValue(LocatePropertyY, value)
-            SetLeft(Me, LocateX)
-            SetTop(Me, value)
-        End Set
-    End Property
+    'Public Property lx As Double
+    'Public Property ly As Double
 
     '見た目上の座標(グリッドに合わせる方)
-    Public Property LocationSurface As Point
+    'Public Property LocationSurface As Point
 
     'バックアップ画像
     Public Property BackupBitmap As BitmapSource
@@ -184,102 +206,3 @@ Public Class ExImage
     End Sub
 End Class
 
-
-<Serializable>
-Public Class SaveData
-    Implements INotifyPropertyChanged
-    <NonSerialized>
-    Public Event PropertyChanged As PropertyChangedEventHandler Implements INotifyPropertyChanged.PropertyChanged
-    Private Sub OnPropertyChanged(propertyName As String)
-        RaiseEvent PropertyChanged(Me, New PropertyChangedEventArgs(propertyName))
-    End Sub
-
-    Private IsChangeX As Boolean = False '縦横同期の時のループ防止用
-    Private IsChangeY As Boolean = False
-
-    '回転角度
-    Private Property _Angle As Double
-    Public Property Angle As Double
-        Get
-            Return _Angle
-        End Get
-        Set(value As Double)
-            _Angle = value
-            Call OnPropertyChanged("Angle")
-        End Set
-    End Property
-
-    '拡大率横
-    Private Property _ScaleX As Double
-    Public Property ScaleX As Double
-        Get
-            Return _ScaleX
-        End Get
-        Set(value As Double)
-            IsChangeX = True '変更中開始
-            _ScaleX = value
-            Call OnPropertyChanged("ScaleX")
-            If ScaleSync And IsChangeY = False Then '縦横同期ならYも変更
-                ScaleY = value
-            End If
-            IsChangeX = False '変更中終了
-        End Set
-    End Property
-
-    '拡大率縦
-    Private Property _ScaleY As Double
-    Public Property ScaleY As Double
-        Get
-            Return _ScaleY
-        End Get
-        Set(value As Double)
-            IsChangeY = True
-            _ScaleY = value
-            Call OnPropertyChanged("ScaleY")
-            If ScaleSync And IsChangeX = False Then
-                ScaleX = value
-            End If
-            IsChangeY = False
-        End Set
-    End Property
-
-    '拡大率縦横同期
-    Private Property _ScaleSync As Boolean
-    Public Property ScaleSync As Boolean
-        Get
-            Return _ScaleSync
-        End Get
-        Set(value As Boolean)
-            _ScaleSync = value
-            Call OnPropertyChanged("ScaleSync")
-        End Set
-    End Property
-
-    '傾斜横
-    Private Property _SkewX As Double
-    Public Property SkewX As Double
-        Get
-            Return _SkewX
-        End Get
-        Set(value As Double)
-            _SkewX = value
-            Call OnPropertyChanged("SkewX")
-        End Set
-    End Property
-
-    '傾斜縦
-    Private Property _SkewY As Double
-    Public Property SkewY As Double
-        Get
-            Return _SkewY
-        End Get
-        Set(value As Double)
-            _SkewY = value
-            Call OnPropertyChanged("SkewY")
-        End Set
-    End Property
-
-    Public Property Left As Double
-    Public Property Top As Double
-
-End Class

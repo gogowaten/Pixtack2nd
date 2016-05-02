@@ -314,9 +314,11 @@ http://www.atmarkit.co.jp/ait/articles/1602/17/news034.html-->
                         <Button x:Name="btReset" Content="元に戻す" Margin="1" Style="{StaticResource btstyle}"/>
                         <Button x:Name="btClipboard" Content="クリップボード" Margin="1" Style="{StaticResource btstyle}"/>
                         <Border  Height="10"/>
+                        <TextBox x:Name="tbxDummy" Width="50"/>
+
                         <Button x:Name="btRemove" Content="消去" Background="Gray" Foreground="White" Margin="1"/>
                         <Button x:Name="btRemoveAll" Content="全消去" Background="Gray" Foreground="White" Margin="1"/>
-                        <Button Content="SetBitmapSource" Click="Button_Click_1" IsEnabled="True"/>
+                        <Button Content="test" Click="Button_Click_1" IsEnabled="False"/>
                       </StackPanel>
                     </Grid>
                     <!--</ScrollViewer>-->
@@ -378,7 +380,7 @@ http://www.atmarkit.co.jp/ait/articles/1602/17/news034.html-->
 
                             <GroupBox Header="グリッドサイズ" Margin="0,5" Background="LemonChiffon">
                               <StackPanel Orientation="Horizontal">
-                                <Slider x:Name="gridSdr" Value="8" Minimum="1" Maximum="64" Width="128" 
+                                <Slider x:Name="sldGrid" Value="8" Minimum="1" Maximum="64" Width="128" 
                     SmallChange="1" IsSnapToTickEnabled="True" IsManipulationEnabled="True" />
                                 <TextBlock x:Name="masuTbk" Text="{Binding Value, ElementName=gridSdr, StringFormat=00}" HorizontalAlignment="Center"/>
                               </StackPanel>
@@ -395,7 +397,7 @@ http://www.atmarkit.co.jp/ait/articles/1602/17/news034.html-->
                             <GroupBox Header="背景" Padding="2">
                               <DockPanel>
                                 <!--<TextBlock Text="背景色" VerticalAlignment="Center" Margin="10,0,5,0"/>-->
-                                <TextBox x:Name="tbxDummy" Width="0"/>
+                                <!--<TextBox x:Name="tbxDummy" Width="0"/>-->
                                 <Button x:Name="btSelectBackColor" Content="背景色選択" Margin="5,0"/>
                                 <Border x:Name="bdSelectBackColor" Width="30" Background="Transparent" BorderThickness="1" BorderBrush="LightGray"
                                           Margin="0,0,5,0"/>
