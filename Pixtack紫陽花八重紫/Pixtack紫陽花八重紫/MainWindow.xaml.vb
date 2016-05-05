@@ -5,6 +5,7 @@ Imports System.Windows.Controls.Canvas
 Imports System.ComponentModel
 Imports System.IO.Compression
 Imports System.Runtime.Serialization
+Imports System.Globalization
 
 Class MainWindow
     'すべてのExThumbを入れておくリストコレスション
@@ -104,7 +105,11 @@ Class MainWindow
     'テンプレートの中のコントロールを取得するTemplate.FindName
     Private Function GetTemplateImage(t As ExThumb) As ExImage
         'Dim neko = t.Template.FindName("image1", t)
+        'デバッグだとたまに取得できないことがあってエラーに繋がる
         Return t.Template.FindName("image1", t)
+
+        'これなら確実に取得できるみたい？→別のExImageを持ってくるみたい
+        'Return t.Template.LoadContent
     End Function
 
 
@@ -126,6 +131,7 @@ Class MainWindow
 
         Dim np As New Point(ex.LocationInside.X - xm, ex.LocationInside.Y - ym)
         ex.LocationInside = np
+        'Dim neko = ex.LocationInside
 
 
 
@@ -139,9 +145,6 @@ Class MainWindow
         'Canvasサイズを変更
         canvas1.Width = r.Width
         canvas1.Height = r.Height
-
-        ''移動した画像がマイナス座標じゃなければ終了
-        'If FocusExThumb.Location.X > 0 AndAlso FocusExThumb.Location.Y > 0 Then Return
 
         'すべての画像の位置を調節
         If r.X <> 0 OrElse r.Y <> 0 Then
@@ -293,10 +296,10 @@ Class MainWindow
 
     'ExThumbを追加するときの表示位置を返す
     Private Function GetNewLocation() As Point
-        'ExThumbを表示する位置
+        '最初の画像なら0,0
         Dim newLocate As New Point(0, 0)
         If OCollectionExThumb.Count = 0 Then
-            Return newLocate '最初の画像なら0,0
+            Return newLocate
         End If
 
         Dim x As Integer = tbSliX.Text
@@ -306,6 +309,10 @@ Class MainWindow
             newLocate = FocusExThumb.LocationInside
             If rbSetLocateFocusImage.IsChecked Then
                 '選択画像に重ねる
+                'newLocate.Offset(x, y)
+                '実際に表示されている座標取得
+                newLocate = GetRect(FocusExThumb).Location
+                'スライド量加算
                 newLocate.Offset(x, y)
             ElseIf rbSetLocateAllImage.IsChecked Then
                 '全体画像に重ねない
@@ -358,8 +365,10 @@ Class MainWindow
         Dim y As Integer = tbSliY.Text
         Dim newLocate As New Point(0, 0)
         If rbSetLocateDrop.IsChecked Then
+            'ドロップした位置
             newLocate = e.GetPosition(canvas1)
         Else
+            '追加位置取得
             newLocate = GetNewLocation()
         End If
 
@@ -460,11 +469,19 @@ Class MainWindow
         End With
 
         'Dim sd As New SaveData With {.Angle = 0, .ScaleX = 1, .ScaleY = 1, .SkewX = 0, .SkewY = 0, .ScaleSync = True}
+        'DataContext指定
         ex.DataContext = sd
+        '座標のBinding
         Dim bind As New Binding("Locate")
         bind.Mode = BindingMode.TwoWay
-
         ex.SetBinding(ExThumb.LocationInsideProperty, bind)
+
+        ''拡大モード、うまくできないので中止
+        'bind = New Binding("ScalingMode")
+        'bind.Mode = BindingMode.TwoWay
+        'ex.SetBinding(ExImage.ScalingModeProperty, bind)
+
+        '座標以外のBindingの設定
         spTransform.DataContext = sd ' ex.DataContext
         Call SetBindingTransform(img)
 
@@ -595,8 +612,19 @@ Class MainWindow
         Dim gt As GeneralTransform = ex.TemplateImage.TransformToVisual(canvas1)
         Dim s As Size = ex.TemplateImage.SourceSize
         Dim r As Rect ' = gt.TransformBounds(New Rect(s))
-
         r = gt.TransformBounds(New Rect(s))
+        Dim r2 = gt.TransformBounds(New Rect(ex.LocationInside, s))
+        Dim img As ExImage = ex.TemplateImage
+        Dim gt2 As Transform = canvas1.TransformToDescendant(ex)
+        'Dim gt2rect = gt2.TransformBounds(GetSaveRect)
+        Dim gt2p = gt2.Transform(New Point(0, 0))
+
+        Dim rs As Size = ex.TemplateImage.RenderSize
+        Dim exgt As Transform = canvas1.TransformToVisual(ex.TemplateImage)
+        Dim p2 = gt.Transform(New Point(0, 0))
+        Dim p3 = exgt.Transform(New Point(0, 0))
+        Dim gt3 As Transform = ex.TemplateImage.TransformToAncestor(canvas1)
+        Dim p4 = gt3.Transform(New Point(0, 0))
 
         Return r
     End Function
@@ -943,8 +971,7 @@ Class MainWindow
             'SaveDataに位置情報を追加する
             Dim ex As ExThumb = OCollectionExThumb(i)
             Dim sd As SaveData = ex.DataContext
-            sd.Left = GetLeft(ex)
-            sd.Top = GetTop(ex)
+
             '一覧リストに追加
             sdList.Add(sd)
         Next
@@ -1039,7 +1066,24 @@ Class MainWindow
         Dim newLocate As Point = GetNewLocation()
         Dim ext As ExThumb
         For i As Integer = 0 To BitmapList.Count - 1
-            ext = SetBitmapSource(BitmapList(i), DataList(i).Locate, DataList(i))
+            Dim sd As SaveData = DataList(i)
+            'この後のSetBitmapSourceメソッドにはExThumbの再描画処理がある
+            'それによってDataListの中のScalingModeの値がなぜか初期値で上書きされてしまうので
+            'スケーリングモードの記録
+            Dim bsm As BitmapScalingMode = sd.ScalingMode
+
+            'ExThumb作成、追加
+            ext = SetBitmapSource(BitmapList(i), sd.Locate, sd)
+
+            'スケーリングモード設定
+            'Dim neko = RenderOptions.GetBitmapScalingMode(ext.TemplateImage)
+            Dim img As ExImage = ext.TemplateImage
+            RenderOptions.SetBitmapScalingMode(img, bsm)
+            'Dim ore = sd.ScalingMode
+            'neko = RenderOptions.GetBitmapScalingMode(img)
+
+            'Call GetSetTransform()
+
         Next
 
     End Sub
@@ -1156,6 +1200,36 @@ Class MainWindow
         'If cp.ShowDialog Then
         '    b = cp.rectMihon.Fill
         'End If
+
+        Dim img As ExImage = FocusExThumb.TemplateImage
+        Dim s As Size = img.SourceSize
+        Dim cs As Size = GetSaveRect.Size
+        Dim p0 As New Point(0, 0)
+
+        Dim gt As Transform = FocusExThumb.TransformToAncestor(canvas1)
+        Dim p As Point = gt.Transform(p0)
+        Dim r As Rect = gt.TransformBounds(New Rect(s))
+        Dim rr = gt.TransformBounds(New Rect(cs))
+
+        Dim gt2 As Transform = img.TransformToVisual(canvas1)
+        Dim p2 As Point = gt2.Transform(p0)
+        Dim r2 As Rect = gt2.TransformBounds(New Rect(s))
+        Dim rr2 = gt2.TransformBounds(New Rect(cs))
+
+        Dim gt00 As Transform = canvas1.TransformToDescendant(img)
+        Dim p00 = gt00.Transform(p0)
+        Dim r00 = gt00.TransformBounds(New Rect(s))
+        Dim rr00 = gt00.TransformBounds(New Rect(cs))
+
+        Dim topEx = GetTop(FocusExThumb)
+        Dim leftEx = GetLeft(FocusExThumb)
+
+        Dim tg As New TransformGroup
+        tg.Children.Add(New RotateTransform(5))
+        tg.Children.Add(New ScaleTransform(3, 3))
+        FocusExThumb.RenderTransform = tg
+
+
 
     End Sub
 
@@ -1324,49 +1398,7 @@ Class MainWindow
     '変形
     '選択画像の変形情報をタブに取り込む
     Private Sub GetSetTransform()
-        ''画像の回転角度をタブのスライダーに反映する
-        'Dim tf As Transform = FocusExThumb.TemplateImage.RenderTransform
-        ''Dim gt As GeneralTransform = tf.Inverse '逆変換
-        'Dim rt As New RotateTransform
-        'Dim st As New ScaleTransform
-        'Dim skewT As New SkewTransform
 
-        'Dim angle As Double = 0
-        'Dim scaleX As Double = 1
-        'Dim scaleY As Double = 1
-        'Dim skewX As Double = 0
-        'Dim skewY As Double = 0
-        'If tf.Value = Matrix.Identity Then
-        '    'Transformが空なら角度0
-        '    'angle = 0
-
-        'Else
-        '    'TransformをRotateTransformに変換してAngle取得
-        '    'Dim rt As RotateTransform = tf
-
-        '    Dim tGroup As TransformGroup = tf
-        '    Dim tCollection As TransformCollection = tGroup.Children
-        '    For Each t As Transform In tCollection
-        '        Select Case t.GetType
-        '            Case rt.GetType
-        '                rt = t
-        '                angle = rt.Angle
-        '            Case st.GetType
-        '                st = t
-        '                scaleX = st.ScaleX
-        '                scaleY = st.ScaleY
-        '            Case skewT.GetType
-        '                skewT = t
-        '        End Select
-        '    Next
-        '    'angle = rt.Angle
-        'End If
-        ''スライダーのValueにセット
-        'sldKaiten.Value = angle
-        'sldScaleX.Value = scaleX
-        'sldScaleY.Value = scaleY
-        'sldSkewX.Value = skewT.AngleX
-        'sldSkewY.Value = skewT.AngleY
 
         '描画モード
         Dim img As ExImage = FocusExThumb.TemplateImage
@@ -1379,6 +1411,14 @@ Class MainWindow
             Case BitmapScalingMode.Unspecified
                 rbScaleNormal.IsChecked = True
         End Select
+
+        'If img.ScalingModeB = BitmapScalingMode.Fant Then
+        '    rbScaleHigh.IsChecked = True
+        'ElseIf img.ScalingModeB = BitmapScalingMode.NearestNeighbor Then
+        '    rbScaleNearest.IsChecked = True
+        'ElseIf img.ScalingModeB = BitmapScalingMode.Unspecified Then
+        '    rbScaleNormal.IsChecked = True
+        'End If
     End Sub
 
     'スライダーのリセット、画像変形のリセット
@@ -1591,14 +1631,37 @@ Class MainWindow
         If FocusExThumb Is Nothing Then Return
 
         Dim img As ExImage = FocusExThumb.TemplateImage
+        'Select Case True
+        '    Case rbScaleNormal.IsChecked
+        '        RenderOptions.SetBitmapScalingMode(img, BitmapScalingMode.Unspecified)
+        '    Case rbScaleNearest.IsChecked
+        '        RenderOptions.SetBitmapScalingMode(img, BitmapScalingMode.NearestNeighbor)
+        '    Case rbScaleHigh.IsChecked
+        '        RenderOptions.SetBitmapScalingMode(img, BitmapScalingMode.Fant)
+        'End Select
+
+        'Select Case True
+        '    Case rbScaleNormal.IsChecked
+        '        img.ScalingModeB = BitmapScalingMode.Linear
+        '    Case rbScaleNearest.IsChecked
+        '        img.ScalingModeB = BitmapScalingMode.NearestNeighbor
+        '    Case rbScaleHigh.IsChecked
+        '        img.ScalingModeB = BitmapScalingMode.Fant
+        'End Select
+
+        Dim sd As SaveData = DirectCast(FocusExThumb.DataContext, SaveData)
         Select Case True
             Case rbScaleNormal.IsChecked
                 RenderOptions.SetBitmapScalingMode(img, BitmapScalingMode.Unspecified)
+                sd.ScalingMode = BitmapScalingMode.Unspecified
             Case rbScaleNearest.IsChecked
                 RenderOptions.SetBitmapScalingMode(img, BitmapScalingMode.NearestNeighbor)
+                sd.ScalingMode = BitmapScalingMode.NearestNeighbor
             Case rbScaleHigh.IsChecked
                 RenderOptions.SetBitmapScalingMode(img, BitmapScalingMode.Fant)
+                sd.ScalingMode = BitmapScalingMode.Fant
         End Select
+
 
     End Sub
 
@@ -1651,7 +1714,8 @@ Class MainWindow
 
     End Sub
 
-    'マウスの下にある画像から色取得して取得中の色を表示
+    'マウスの下にある画像から色取得
+    '画像中の任意のピクセルの色を返す
     Public Function GetPixleColor(x As Integer, y As Integer, bs As BitmapSource) As Color
         'クリックされた位置の1ｘ1の画像を切り取り作成
         Dim cb As New CroppedBitmap(bs, New Int32Rect(x, y, 1, 1))
@@ -2087,9 +2151,7 @@ Public Class SaveData
         End Set
     End Property
 
-    Public Property Left As Double
-    Public Property Top As Double
-
+    '位置情報
     <DataMember>
     Private Property _Locate As Point
     Public Property Locate As Point
@@ -2101,8 +2163,26 @@ Public Class SaveData
         End Set
     End Property
 
+    ''スケーリングモード、うまくできないので中止
+    '<DataMember>
+    'Private Property _ScalingMode As BitmapScalingMode
+    'Public Property ScalingMode As BitmapScalingMode
+    '    Get
+    '        Return _ScalingMode
+    '    End Get
+    '    Set(value As BitmapScalingMode)
+    '        _ScalingMode = value
+    '        OnPropertyChanged("ScalingMode")
+    '    End Set
+    'End Property
+
+    'スケーリングモードの記録はこっちで妥協
+    <DataMember>
+    Public Property ScalingMode As BitmapScalingMode
+
+
     'デシリアライズ時に実行される
-    '空のPropertyがあったら初期設定する
+    '空のPropertyがあったら初期設定するので全部入れておいたほうがいい？
     <OnDeserializing>
     Public Sub def初期値設定(context As StreamingContext)
         Me.Angle = 0
@@ -2111,6 +2191,47 @@ Public Class SaveData
         Me.ScaleY = 1
         Me.SkewX = 0
         Me.SkewY = 0
-
+        Me.ScalingMode = BitmapScalingMode.Fant
     End Sub
+End Class
+
+
+
+
+'.NET TIPS： WPF/ UWP： ラジオボタンを双方向バインディングするには？［C#/VB］ - ＠IT
+'http://www.atmarkit.co.jp/ait/articles/1602/03/news032.html
+
+'拡大モードのラジオボタンとデータバインドに必要なValueValueConverter
+Public Class ScalingModeBooleanConverter
+    Implements IValueConverter
+
+    'ConverterParameterをEnumに変換
+    Public Function ConvertFromConverterParameter(parameter As Object) As BitmapScalingMode
+        Dim parameterString As String = CType(parameter, String)
+        Return CType([Enum].Parse(GetType(BitmapScalingMode), parameterString), BitmapScalingMode)
+    End Function
+
+#Region "IValueConverter メンバー(未使用)"
+    'Enum to bool
+    Public Function Convert(value As Object, targetType As Type, parameter As Object,
+                            culture As CultureInfo) As Object Implements IValueConverter.Convert
+        'Throw New NotImplementedException()
+        'XAMLに定義されたConverterParameterをEnumに変換する
+        Dim parameterValue As BitmapScalingMode = ConvertFromConverterParameter(parameter)
+        'ConverterParameterとバインディングソースの値が等しいか？
+        Return parameterValue.Equals(value)
+    End Function
+
+    'bool to Enum
+    Public Function ConvertBack(value As Object, targetType As Type, parameter As Object,
+                                culture As CultureInfo) As Object Implements IValueConverter.ConvertBack
+        'Throw New NotImplementedException()
+        'true to false の変化は無視することで
+        '選択されたラジオボタンだけをデータに反映させる
+        If (Not CType(value, Boolean)) Then
+            Return System.Windows.DependencyProperty.UnsetValue
+        End If
+        Return ConvertFromConverterParameter(parameter)
+    End Function
+#End Region
 End Class

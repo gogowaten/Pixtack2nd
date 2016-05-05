@@ -1073,7 +1073,7 @@ Public Class ColorPalette
         If cbIsFixedY.IsChecked Then
             IsYFixed = True
             rectY.Fill = rectMihon.Fill
-            tbkOldHSV.Text = $"HSV={sldHue.Value}, {sldS.Value:#.0}, {sldV.Value:#.0}"
+            tbkOldHSV.Text = $"HSV={sldHue.Value:#.0}, {sldS.Value:#.0}, {sldV.Value:#.0}"
             Dim y As Double = ColortoHDTV(Color.FromArgb(255, sldR.Value, sldG.Value, sldB.Value), sldGamma.Value)
             tbkOldY.Text = $"{y:0.0}"
 

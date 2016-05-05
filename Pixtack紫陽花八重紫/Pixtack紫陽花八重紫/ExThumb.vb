@@ -14,7 +14,7 @@ Public Class ExThumb
     End Sub
 
     Public Sub New()
-        VisualBitmapScalingMode = BitmapScalingMode.Fant
+        'VisualBitmapScalingMode = BitmapScalingMode.Fant
 
     End Sub
 
@@ -43,33 +43,9 @@ Public Class ExThumb
     '    End Set
     'End Property
 
-    'Public Shared ReadOnly Property LocatePropertyX As DependencyProperty =
-    '    DependencyProperty.Register("LocateX", GetType(Double), GetType(ExThumb), New PropertyMetadata(0R))
-    'Public Property LocateX As Double
-    '    Get
-    '        Return GetValue(LocatePropertyX)
-    '    End Get
-    '    Set(value As Double)
-    '        SetValue(LocatePropertyX, value)
-    '        SetLeft(Me, value)
-    '        SetTop(Me, LocateY)
+    '↑のをDependencyPropertyに書きなおしてBindingできるようにしたものが↓
 
-    '    End Set
-    'End Property
-
-    'Public Shared ReadOnly Property LocatePropertyY As DependencyProperty =
-    '    DependencyProperty.Register("LocateY", GetType(Double), GetType(ExThumb), New PropertyMetadata(0R))
-    'Public Property LocateY As Double
-    '    Get
-    '        Return GetValue(LocatePropertyY)
-    '    End Get
-    '    Set(value As Double)
-    '        SetValue(LocatePropertyY, value)
-    '        SetLeft(Me, LocateX)
-    '        SetTop(Me, value)
-    '    End Set
-    'End Property
-
+    '座標
     Public Shared ReadOnly Property LocationInsideProperty As DependencyProperty =
         DependencyProperty.Register("Locate", GetType(Point), GetType(ExThumb), New PropertyMetadata(New Point(0, 0)))
     Public Property LocationInside As Point
@@ -78,22 +54,28 @@ Public Class ExThumb
         End Get
         Set(value As Point)
             SetValue(LocationInsideProperty, value)
+            'canvas1にセット
             SetLeft(Me, value.X)
             SetTop(Me, value.Y)
             '再描画！！！！
             Main.ReRender(Me)
             'Main.StatusBarDisplayUpdate(Me)
             Main.RefreshStatusBarLocate(Me)
-            'lx = value.X
-            'ly = value.Y
         End Set
     End Property
 
-    'Public Property lx As Double
-    'Public Property ly As Double
+    'Public Shared ReadOnly Property ScalingModeProperty As DependencyProperty =
+    '    DependencyProperty.Register("ScalingMode", GetType(BitmapScalingMode), GetType(ExThumb), New PropertyMetadata(BitmapScalingMode.Fant))
+    'Public Property ScalingMode As BitmapScalingMode
+    '    Get
+    '        Return GetValue(ScalingModeProperty)
+    '    End Get
+    '    Set(value As BitmapScalingMode)
+    '        SetValue(ScalingModeProperty, value)
+    '        Me.VisualBitmapScalingMode = value
+    '    End Set
+    'End Property
 
-    '見た目上の座標(グリッドに合わせる方)
-    'Public Property LocationSurface As Point
 
     'バックアップ画像
     Public Property BackupBitmap As BitmapSource
@@ -188,7 +170,7 @@ End Class
 Public Class ExImage
     Inherits Image
     Public Sub New()
-        VisualBitmapScalingMode = BitmapScalingMode.Fant
+        'VisualBitmapScalingMode = BitmapScalingMode.Fant
     End Sub
     Protected Overrides Sub OnRenderSizeChanged(sizeInfo As SizeChangedInfo)
         MyBase.OnRenderSizeChanged(sizeInfo)
@@ -200,9 +182,23 @@ Public Class ExImage
     '拡大縮小などの変形時の描画品質設定
     Protected Overrides Sub OnRender(dc As DrawingContext)
         MyBase.OnRender(dc)
-        VisualBitmapScalingMode = BitmapScalingMode.NearestNeighbor 'ニアレストネイバー(最近傍法)
-        VisualBitmapScalingMode = BitmapScalingMode.Fant 'HighQualityと同等
+        'VisualBitmapScalingMode = BitmapScalingMode.NearestNeighbor 'ニアレストネイバー(最近傍法)
+        'VisualBitmapScalingMode = BitmapScalingMode.Fant 'HighQualityと同等
 
     End Sub
+
+    ''拡大モード、うまくできないので中止
+    'Public Shared ReadOnly Property ScalingModeProperty As DependencyProperty =
+    '    DependencyProperty.Register("ScalingMode", GetType(BitmapScalingMode), GetType(ExThumb), New PropertyMetadata(BitmapScalingMode.Fant))
+    'Public Property ScalingModeB As BitmapScalingMode
+    '    Get
+    '        Return GetValue(ScalingModeProperty)
+    '    End Get
+    '    Set(value As BitmapScalingMode)
+    '        SetValue(ScalingModeProperty, value)
+    '        Me.VisualBitmapScalingMode = value
+    '    End Set
+    'End Property
+
 End Class
 

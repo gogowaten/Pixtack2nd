@@ -12,6 +12,8 @@
     <ControlTemplate x:Key="ct" TargetType="{x:Type local:ExThumb}">
       <local:ExImage x:Name="image1"/>
     </ControlTemplate>
+    <!--拡大モード用、値変換-->
+    <!--<local:ScalingModeBooleanConverter x:Key="ScalingConverter"/>-->
 
     <Style TargetType="{x:Type RadioButton}" x:Key="radioButtonStyle1">
       <Setter Property="Background" Value="Blue"/>
@@ -318,7 +320,7 @@ http://www.atmarkit.co.jp/ait/articles/1602/17/news034.html-->
 
                         <Button x:Name="btRemove" Content="消去" Background="Gray" Foreground="White" Margin="1"/>
                         <Button x:Name="btRemoveAll" Content="全消去" Background="Gray" Foreground="White" Margin="1"/>
-                        <Button Content="test" Click="Button_Click_1" IsEnabled="False"/>
+                        <Button Content="test" Click="Button_Click_1" IsEnabled="True"/>
                       </StackPanel>
                     </Grid>
                     <!--</ScrollViewer>-->
@@ -436,11 +438,16 @@ http://www.atmarkit.co.jp/ait/articles/1602/17/news034.html-->
                           <StackPanel x:Name="spTransform">
                             <!--<Button x:Name="btGetTransform" Content="Get" Background="Khaki"/>-->
                             <!--<Button x:Name="btSetTransform" Content="Set" />-->
-                            <GroupBox Header="描画モード" Background="MintCream">
+                            <GroupBox x:Name="gBoxScalingMode" Header="描画モード" Background="MintCream">
                               <WrapPanel>
-                                <RadioButton x:Name="rbScaleHigh" Content="綺麗" Margin="5,0" IsChecked="True" Style="{StaticResource radioButtonStyle1}"/>
-                                <RadioButton x:Name="rbScaleNormal" Content="普通" Margin="5,0" Style="{StaticResource radioButtonStyle1}"/>
-                                <RadioButton x:Name="rbScaleNearest" Content="特殊" Margin="5,0" Style="{StaticResource radioButtonStyle1}"/>
+
+                                <RadioButton x:Name="rbScaleHigh" Content="綺麗" Margin="5,0"
+                                             IsChecked="True"
+                                             Style="{StaticResource radioButtonStyle1}"/>
+                                <RadioButton x:Name="rbScaleNormal" Content="普通" Margin="5,0"                                             
+                                             Style="{StaticResource radioButtonStyle1}"/>
+                                <RadioButton x:Name="rbScaleNearest" Content="特殊" Margin="5,0"
+                                             Style="{StaticResource radioButtonStyle1}"/>
                               </WrapPanel>
                             </GroupBox>
 
