@@ -255,7 +255,10 @@ Class MainWindow
     Private Function SetOCollectionExThumb() As ExThumb
         Dim ex As New ExThumb()
         'ResourcesのTemplateを取得してExThumbに適用
-        ex.Template = Me.Resources.Item("ct")
+        'ex.Template = Me.Resources.Item("ct")
+        Dim ct As ControlTemplate = Me.Resources.Item("ct")
+        ex.Template = ct
+        ex.ApplyTemplate() 'Templateの再構築、これで中のControlを取得できるようになる
 
         ex.SetMain(Me) 'MainWindowをExThumbに登録する
 
@@ -284,11 +287,12 @@ Class MainWindow
         'Canvasに追加して表示
         canvas1.Children.Add(ex)
 
-        '追加したExThumbを再描画！！！！！！！！！！！！！！！！！！！！
-        '再描画しないとTemplateが取得できないのでその中のExImageも取得できない
-        Call ReRender(ex)
-        'InvalidateVisual()
-        'ex.InvalidateVisual()
+        ''追加したExThumbを再描画！！！！！！！！！！！！！！！！！！！！
+        ''再描画しないとTemplateが取得できないのでその中のExImageも取得できない
+        ''→ApplyTemplateで再構築するようにしたので必要なくなった
+        'Call ReRender(ex)
+        ''InvalidateVisual()
+        ''ex.InvalidateVisual()
         Return ex
 
     End Function

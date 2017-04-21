@@ -202,3 +202,7 @@ Public Class ExImage
 
 End Class
 
+Public Class ExCanvas
+    Inherits Canvas
+
+End Class

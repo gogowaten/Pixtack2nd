@@ -10,7 +10,10 @@
   <!--Width=554-->
   <Window.Resources>
     <ControlTemplate x:Key="ct" TargetType="{x:Type local:ExThumb}">
-      <local:ExImage x:Name="image1"/>
+      <!--<local:ExCanvas x:Name="ctCanvas">-->
+
+        <local:ExImage x:Name="image1"/>
+      <!--</local:ExCanvas>-->
     </ControlTemplate>
     <!--拡大モード用、値変換-->
     <!--<local:ScalingModeBooleanConverter x:Key="ScalingConverter"/>-->
